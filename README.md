@@ -20,6 +20,18 @@ _In broad terms_
 - Where possible, task=issue=branch.
 - No pushing directly to `main`.
 
+Installation
+
+```bash
+pip3 install --editable '.[dev,test,docs]
+```
+
+Please also install the pre-commit hook:
+
+```bash
+pipx run pre-commit install
+```
+
 ## Components
 
 ### Inference Container

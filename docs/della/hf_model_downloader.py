@@ -13,10 +13,13 @@
 # python hf_model_downloader.py --repo_id='HF_MODEL_REF' --revision='main' --cache_dir=''
 
 # Script begins
+from __future__ import annotations
+
 import argparse
 import os
-from huggingface_hub import snapshot_download
 from pathlib import Path
+
+from huggingface_hub import snapshot_download
 
 
 def download_save_huggingface_model(repo_id: str, revision: str, cache_dir: str):
@@ -35,10 +38,9 @@ def get_weight_dir(
     """
     if not isinstance(hf_cache_dir, Path):
         hf_cache_dir = Path(hf_cache_dir)
-    model_path = "--".join(["models"] + model_ref.split("/"))
+    model_path = "--".join(["models", *model_ref.split("/")])
     snapshot = (hf_cache_dir / f"{model_path}/refs/{revision}").read_text()
-    model_weights_dir = hf_cache_dir / f"{model_path}/snapshots/{snapshot}"
-    return model_weights_dir
+    return hf_cache_dir / f"{model_path}/snapshots/{snapshot}"
 
 
 def main():
