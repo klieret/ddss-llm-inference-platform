@@ -1,3 +1,7 @@
+# Custom directories
+## this contains the models used for local testing
+/local/data
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
