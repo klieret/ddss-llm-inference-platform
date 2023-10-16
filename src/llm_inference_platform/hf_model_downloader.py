@@ -13,7 +13,7 @@
 # python hf_model_downloader.py --repo_id='HF_MODEL_REF' --revision='main' --cache_dir=''
 
 # Script begins
-from __future__ import annotations
+
 
 import argparse
 import os
