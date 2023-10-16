@@ -30,7 +30,9 @@ classifiers = [
   "Typing :: Typed",
 ]
 dynamic = ["version"]
-dependencies = []
+dependencies = [
+    "gradio"
+]
 
 [project.optional-dependencies]
 test = [

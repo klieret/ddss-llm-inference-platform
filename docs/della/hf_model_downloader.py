@@ -21,16 +21,18 @@ from pathlib import Path
 
 from huggingface_hub import snapshot_download
 
+HF_DEFAULT_HOME = os.environ.get("HF_HOME")
+
 
 def download_save_huggingface_model(repo_id: str, revision: str, cache_dir: str):
     if cache_dir == "":
-        cache_dir = os.environ.get("HF_HOME")
+        cache_dir = HF_DEFAULT_HOME
     snapshot_download(repo_id=repo_id, revision=revision, cache_dir=cache_dir)
 
 
 def get_weight_dir(
     model_ref: str,
-    hf_cache_dir: Path = Path(os.environ.get("HF_HOME")),
+    hf_cache_dir: Path = HF_DEFAULT_HOME,
     revision: str = "main",
 ) -> Path:
     """
