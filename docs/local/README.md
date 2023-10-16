@@ -1,8 +1,6 @@
-# local
+# Local development notes
 
 Testing on local hardware (Alienware R15 X2 laptop).
-
-# Development Notes
 
 ## Software Information
 
