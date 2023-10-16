@@ -25,6 +25,7 @@ HF_DEFAULT_HOME = os.environ.get("HF_HOME")
 
 
 def download_save_huggingface_model(repo_id: str, revision: str, cache_dir: str):
+    """Download model from huggingface hub and save to cache_dir"""
     if cache_dir == "":
         cache_dir = HF_DEFAULT_HOME
     snapshot_download(repo_id=repo_id, revision=revision, cache_dir=cache_dir)
@@ -46,6 +47,7 @@ def get_weight_dir(
 
 
 def main():
+    """Run script from command line"""
     # Args
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo_id", type=str, help="HF Model Hub Repo ID")
@@ -64,4 +66,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    exit(0)
