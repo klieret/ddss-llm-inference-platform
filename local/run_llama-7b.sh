@@ -1,3 +1,5 @@
+#!/usr/bin/env bash
+
 model=meta-llama/Llama-2-7b-hf
 volume=$PWD/data # share a volume with the Docker container to avoid downloading weights every run
 token=$(cat ~/.cache/huggingface/token) # This is my token

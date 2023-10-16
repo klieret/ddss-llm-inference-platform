@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 module purge
 module load cudatoolkit/12.2 cudnn/cuda-11.x/8.2.0
 APPTAINER_CACHEDIR=/scratch/gpfs/$USER/APPTAINER_CACHE
