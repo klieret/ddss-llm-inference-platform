@@ -32,6 +32,10 @@ Please also install the pre-commit hook:
 pipx run pre-commit install
 ```
 
+Alternatively, you can run `pre-commit` manually with `nox -s lint`.
+
+To run addition python lint checks, run `nox -s pylint`.
+
 ## Components
 
 ### Inference Container
