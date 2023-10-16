@@ -1,18 +1,15 @@
 #! /usr/bin/python3
 
-# HuggingFace Model Downloader Script
-# Author: Dr Musashi Hinck
-#
-# Convenience command-line script to download model assets to cache
-# for offline usage on compute nodes.
+"""
+HuggingFace Model Downloader Script
+Author: Dr Musashi Hinck
 
-# Requirements:
-# huggingface_hub
+Convenience command-line script to download model assets to cache
+for offline usage on compute nodes.
 
-# Usage:
-# python hf_model_downloader.py --repo_id='HF_MODEL_REF' --revision='main' --cache_dir=''
+Requirements: huggingface_hub
+"""
 
-# Script begins
 import argparse
 import os
 from huggingface_hub import snapshot_download
@@ -43,7 +40,7 @@ def get_weight_dir(
 
 def main():
     # Args
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--repo_id', type=str, help="HF Model Hub Repo ID")
     parser.add_argument('--revision', type=str, default='main')
     parser.add_argument('--cache_dir', type=str, default='', help='Location to save model, defaults to None')
