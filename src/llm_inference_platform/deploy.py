@@ -5,6 +5,7 @@ import logging
 import os
 import subprocess
 from pathlib import Path
+from typing import Literal
 
 # fixme
 # pylint: disable=missing-function-docstring
@@ -12,7 +13,8 @@ from pathlib import Path
 
 def list_available_models(
     model_directory: os.PathLike = Path("./models"),
-) -> list[os.PathLike]:
+) -> list[Path]:
+    """Given a model directory, list all directories"""
     model_list = sorted(Path(model_directory).iterdir())
     return [m for m in model_list if m.is_dir()]
 
@@ -22,7 +24,7 @@ def construct_cmd(
     model_dir: os.PathLike = Path("./models"),
     quantization: str = "None",
     context_length: int = 2048,
-    container_type="docker",  # Docker or Singularity
+    container_type=Literal["docker", "singularity"],
 ) -> list[str]:
     # Construct argument string
     cmd = []
