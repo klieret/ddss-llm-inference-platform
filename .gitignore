@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# setuptools_scm
+src/*/_version.py
+
 # C extensions
 *.so
 
