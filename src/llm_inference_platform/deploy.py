@@ -6,8 +6,6 @@ import os
 import subprocess
 from pathlib import Path
 
-import gradio as gr
-
 # fixme
 # pylint: disable=missing-function-docstring
 
@@ -79,86 +77,3 @@ def launch_container(cmd: list[str]) -> None:
         stderr=subprocess.PIPE,
     )
     logging.info("Launching process with PID %s", process.pid)
-
-
-def main():
-    ## Global Arguments/Resources
-    model_directory = Path.cwd() / "../local/data/"
-    model_names = list_available_models(model_directory)
-    quantization_types = ["None", "bitsandbytes", "GPTQ"]
-
-    with gr.Blocks() as app:
-        gr.Markdown("# Text Generation Launcher")
-
-        # Interactable Objects
-        model_dropdown = gr.Dropdown(choices=model_names)
-        qtz_dropdown = gr.Dropdown(choices=quantization_types)
-        preview_cmd = gr.Textbox(
-            label="Command to evaluate",
-            lines=11,
-            value=" ".join(
-                construct_cmd(
-                    model_name=model_dropdown.value,
-                    model_dir=model_directory,
-                    quantization=qtz_dropdown.value,
-                )
-            ),
-        )
-        preview_btn = gr.Button("Preview command")
-
-        # Events
-        model_dropdown.select(
-            lambda choice: (
-                choice,
-                " ".join(
-                    construct_cmd(
-                        model_name=model_dropdown.value,
-                        model_dir=model_directory,
-                        quantization=qtz_dropdown.value,
-                    )
-                ),
-            ),
-            inputs=model_dropdown,
-            outputs=[model_dropdown, preview_cmd],
-        )
-
-        qtz_dropdown.select(
-            lambda choice: (
-                choice,
-                " ".join(
-                    construct_cmd(
-                        model_name=model_dropdown.value,
-                        model_dir=model_directory,
-                        quantization=qtz_dropdown.value,
-                    )
-                ),
-            ),
-            inputs=model_dropdown,
-            outputs=[model_dropdown, preview_cmd],
-        )
-
-        preview_btn.click(
-            fn=lambda _: " ".join(
-                construct_cmd(
-                    model_name=model_dropdown.value,
-                    model_dir=model_directory,
-                    quantization=qtz_dropdown.value,
-                )
-            ),
-            inputs=[],
-            outputs=[preview_cmd],
-        )
-
-    return app
-
-
-def test():
-    app = main()
-    app.launch(share=False)
-
-
-test()
-
-# if __name__=="__main__":
-#     interface = main()
-#     interface.launch()
