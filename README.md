@@ -1,5 +1,7 @@
 # llm-inference-platform
 
+<!-- SPHINX-START -->
+
 Repo for developing hosted LLM inference solution on Princeton's Della cluster.
 
 Developers:
@@ -34,7 +36,11 @@ pipx run pre-commit install
 
 Alternatively, you can run `pre-commit` manually with `nox -s lint`.
 
-To run addition python lint checks, run `nox -s pylint`.
+In addition, `nox` provides the following:
+
+- To run addition python lint checks, run `nox -s pylint`
+- To build the documentation, run `nox -s docs` (the resulting documentation
+  will be rendered at `docs/_build/html/index.html`)
 
 ## Components
 

@@ -6,8 +6,10 @@
 
 ```
 
-```{include} ../README.md
-
+```{toctree}
+readme.md
+della/README.md
+local/README.md
 ```
 
 ## Indices and tables
