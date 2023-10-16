@@ -1,10 +1,12 @@
 #!/usr/bin/env python
+from __future__ import annotations
+
+import logging
 import os
 import subprocess
 from pathlib import Path
+
 import gradio as gr
-import logging
-from typing import List
 
 
 ## Functions
@@ -12,8 +14,7 @@ def list_available_models(
     model_directory: os.PathLike = Path("./models"),
 ) -> list[os.PathLike]:
     model_list = sorted(Path(model_directory).iterdir())
-    model_list = [m for m in model_list if m.is_dir()]
-    return model_list
+    return [m for m in model_list if m.is_dir()]
 
 
 def construct_cmd(
@@ -22,7 +23,7 @@ def construct_cmd(
     quantization: str = "None",
     context_length: int = 2048,
     container_type="docker",  # Docker or Singularity
-) -> List[str]:
+) -> list[str]:
     # Construct argument string
     cmd = []
     # Containerization arguments
@@ -54,7 +55,8 @@ def construct_cmd(
                 "text-generation-inference_latest.sif",
             ]
         case _:
-            raise ValueError(f"{container_type} is not supported.")
+            msg = f"{container_type} is not supported."
+            raise ValueError(msg)
 
     # Arguments to text-generation-launcher
     cmd += [
@@ -65,7 +67,7 @@ def construct_cmd(
     return cmd
 
 
-def launch_container(cmd: List[str]) -> None:
+def launch_container(cmd: list[str]) -> None:
     # Launch
     logging.info(" ".join())
     process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)

@@ -1,0 +1,12 @@
+# Changes here will be overwritten by Copier; NEVER EDIT MANUALLY
+_commit: 2023.09.21
+_src_path: gh:scientific-python/cookie
+backend: hatch
+email: mj2976@princeton.edu, kl5675@princeton.edu
+full_name: Musashi Jacobs-Harukawa, Kilian Lieret
+license: MIT
+org: princeton-ddss
+project_name: llm_inference_platform
+project_short_description: A HuggingFace inference platform for Princeton
+url: https://github.com/princeton-ddss/llm_inference_platform
+vcs: true
