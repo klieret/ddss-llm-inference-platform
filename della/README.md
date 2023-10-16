@@ -2,7 +2,7 @@
 
 General workflow:
 
-1. **Donwload TGI**: run `prepare_container.sh` on head node. This downloads and
+1. **Download TGI**: run `prepare_container.sh` on head node. This downloads and
    converts TGI into a Singularity image.
    - In future it would be better to have a shared use image.
 2. **Download Model**: current solution is in `hf_model_downloader.py`
