@@ -7,7 +7,6 @@ Developers:
 - @muhark
 - @klieret
 
-
 ## Solution
 
 _In broad terms_
@@ -21,7 +20,6 @@ _In broad terms_
 - Where possible, task=issue=branch.
 - No pushing directly to `main`.
 
-
 ## Components
 
 ### Inference Container
@@ -30,17 +28,21 @@ _Active Issues_:
 
 - [#3](https://github.com/princeton-ddss/llm-inference-platform/issues/3)
 
-We are using the [`text-generation-inference`](https://github.com/huggingface/text-generation-inference) (TGI) container from HuggingFace (HF).
+We are using the
+[`text-generation-inference`](https://github.com/huggingface/text-generation-inference)
+(TGI) container from HuggingFace (HF).
 
-This is their optimized production-grade solution for serving LLM inference in their own products.
+This is their optimized production-grade solution for serving LLM inference in
+their own products.
 
 It primarily consists of two components:
 
 - Web server (written in Rust): serves endpoints and manages request batching
-- LM engine (Python): runs models compatible with the HF ecosystem, with various optimizations baked in.
+- LM engine (Python): runs models compatible with the HF ecosystem, with various
+  optimizations baked in.
 
-HF provides this as a Docker container, which we are using via Singularity on compute nodes.
-
+HF provides this as a Docker container, which we are using via Singularity on
+compute nodes.
 
 ### Web GUI
 
@@ -48,25 +50,23 @@ _Active Issues_:
 
 - [#4](https://github.com/princeton-ddss/llm-inference-platform/issues/4)
 
-Web GUI that basically exposes all of the TGI options via dropdown menus with explanations of what they do/the trade-off they provide.
-
+Web GUI that basically exposes all of the TGI options via dropdown menus with
+explanations of what they do/the trade-off they provide.
 
 _Model Selection_:
 
-Users will be able to select models from either a pre-designated list (stored in a shared read-only path) or point the container to their own custom checkpoints.
-
+Users will be able to select models from either a pre-designated list (stored in
+a shared read-only path) or point the container to their own custom checkpoints.
 
 _Resource Selection_:
 
-For known architectures, optimal resource requests can be calculated with testing and then used to populate the form.
-
+For known architectures, optimal resource requests can be calculated with
+testing and then used to populate the form.
 
 ### Web Server
 
 _tbc_
 
 - Access to compute nodes **necessary**.
-- Outside access only from within VPN **highly desirable** (because this simplifies authentication issues).
-
-
-
+- Outside access only from within VPN **highly desirable** (because this
+  simplifies authentication issues).

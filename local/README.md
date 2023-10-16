@@ -53,7 +53,7 @@ Initially deployment script [`run_llama-7b.sh`](./run_llama-7b.sh).
     [...]
 ```
 
-Test query: 
+Test query:
 
 ```bash
 $ curl 127.0.0.1:8080/generate \
@@ -65,7 +65,7 @@ $ curl 127.0.0.1:8080/generate \
 Response:
 
 ```json
-{"generated_text":"\nWhat is Deep Learning? Deep learning is a subset of machine learning that is based on artificial neural"}⏎  
+{"generated_text":"\nWhat is Deep Learning? Deep learning is a subset of machine learning that is based on artificial neural"}⏎
 ```
 
 Logs:
@@ -73,7 +73,6 @@ Logs:
 ```
 2023-09-06T13:47:01.731233Z  INFO HTTP request{otel.name=POST /generate http.client_ip= http.flavor=1.1 http.host=127.0.0.1:8080 http.method=POST http.route=/generate http.scheme=HTTP http.target=/generate http.user_agent=curl/7.88.1 otel.kind=server trace_id=d6e2778955d17bf523e3dc568754ef3e}:generate{parameters=GenerateParameters { best_of: None, temperature: None, repetition_penalty: None, top_k: None, top_p: None, typical_p: None, do_sample: false, max_new_tokens: 20, return_full_text: None, stop: [], truncate: None, watermark: false, details: false, decoder_input_details: false, seed: None, top_n_tokens: None } total_time="986.532642ms" validation_time="681.374µs" queue_time="188.125µs" inference_time="985.66325ms" time_per_token="49.283162ms" seed="None"}: text_generation_router::server: router/src/server.rs:289: Success
 ```
-
 
 Other notes:
 
