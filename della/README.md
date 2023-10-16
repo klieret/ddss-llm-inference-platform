@@ -2,8 +2,14 @@
 
 General workflow:
 
+<<<<<<< Updated upstream
 1. **Donwload TGI**: run `prepare_container.sh` on head node. This downloads and converts TGI into a Singularity image.
     - In future it would be better to have a shared use image.
+=======
+1. **Download TGI**: run `prepare_container.sh` on head node. This downloads and
+   converts TGI into a Singularity image.
+   - In future it would be better to have a shared use image.
+>>>>>>> Stashed changes
 2. **Download Model**: current solution is in `hf_model_downloader.py`
     - Issue: currently need to point to snapshot path
     - Python function in library parses directory to solve this, probably a better solution exists
