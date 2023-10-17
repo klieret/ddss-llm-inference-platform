@@ -4,7 +4,7 @@ import enum
 import subprocess
 import time
 from enum import auto
-from typing import Literal, Self
+from typing import Literal
 
 from llm_inference_platform.utils.log import logger
 
@@ -19,7 +19,7 @@ class JobState(enum.Enum):
     UNKNOWN = auto()
 
     @classmethod
-    def from_status_str(cls, status: str) -> Self:
+    def from_status_str(cls, status: str) -> JobState:
         """Interpret output of SLURM job status command"""
         match status:
             case "RUNNING":
@@ -97,11 +97,15 @@ class WaitTillRunning:
         elif level == "error":
             logger.error(message)
         else:
-            msg = f"Unknown level {level}"
+            msg = f"Unknown level {level}"  # type: ignore[unreachable]
             raise ValueError(msg)
 
-    def wait(self) -> None:
-        """Wait until job is running"""
+    def wait(self) -> bool:
+        """Wait until job is running
+
+        Returns:
+            true if job is running, false otherwise
+        """
         self.user_feedback(f"Waiting for job {self._job_id} to start...")
         start_time = time.time()
         while True:
@@ -112,9 +116,9 @@ class WaitTillRunning:
                     self.user_feedback(f"Job {self._job_id} is running.")
                     return True
                 case JobState.PENDING:
-                    start_time = get_slurm_start_time(self._job_id)
+                    expected_start_time = get_slurm_start_time(self._job_id)
                     self.user_feedback(
-                        f"Job {self._job_id} is pending. Estimated start time {start_time}."
+                        f"Job {self._job_id} is pending. Estimated start time {expected_start_time}."
                     )
                     time.sleep(self._poll_interval)
                 case JobState.FAILED:

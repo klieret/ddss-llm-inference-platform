@@ -9,7 +9,7 @@ LOG_DEFAULT_LEVEL = logging.DEBUG
 
 def get_logger(name: str = "llmip", level: int = LOG_DEFAULT_LEVEL) -> logging.Logger:
     """Sets up global logger."""
-    _log = colorlog.getLogger(name)
+    _log: logging.Logger = colorlog.getLogger(name)
 
     if _log.handlers:
         # the logger already has handlers attached to it, even though
