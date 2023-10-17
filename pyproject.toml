@@ -29,7 +29,8 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "gradio"
+    "gradio",
+    "colorlog"
 ]
 
 [project.optional-dependencies]
