@@ -7,7 +7,7 @@ import colorlog
 LOG_DEFAULT_LEVEL = logging.DEBUG
 
 
-def get_logger(name="llmip", level=LOG_DEFAULT_LEVEL):
+def get_logger(name: str = "llmip", level: int = LOG_DEFAULT_LEVEL) -> logging.Logger:
     """Sets up global logger."""
     _log = colorlog.getLogger(name)
 
