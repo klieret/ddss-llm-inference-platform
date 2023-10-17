@@ -5,26 +5,26 @@ import logging
 import os
 import subprocess
 from pathlib import Path
-from typing import Literal
+from typing import Any, Literal
 
 # fixme
 # pylint: disable=missing-function-docstring
 
 
 def list_available_models(
-    model_directory: os.PathLike = Path("./models"),
+    model_directory: str | os.PathLike[Any] = Path("./models"),
 ) -> list[Path]:
-    """Given a model directory, list all directories"""
+    """Given a model directory, list all model subdirectories"""
     model_list = sorted(Path(model_directory).iterdir())
     return [m for m in model_list if m.is_dir()]
 
 
 def construct_cmd(
-    model_name: str | os.PathLike = "<SELECT MODEL>",
-    model_dir: os.PathLike = Path("./models"),
+    model_name: str,
+    model_dir: Path = Path("./models"),
     quantization: str = "None",
     context_length: int = 2048,
-    container_type=Literal["docker", "singularity"],
+    container_type: Literal["docker", "singularity"] = "docker",
 ) -> list[str]:
     # Construct argument string
     cmd = []
@@ -57,7 +57,7 @@ def construct_cmd(
                 "text-generation-inference_latest.sif",
             ]
         case _:
-            msg = f"{container_type} is not supported."
+            msg = f"{container_type} is not supported."  # type: ignore[unreachable]
             raise ValueError(msg)
 
     # Arguments to text-generation-launcher

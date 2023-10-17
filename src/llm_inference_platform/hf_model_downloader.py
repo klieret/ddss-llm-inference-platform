@@ -18,13 +18,16 @@ from __future__ import annotations
 import argparse
 import os
 from pathlib import Path
+from typing import Any
 
 from huggingface_hub import snapshot_download
 
-HF_DEFAULT_HOME = os.environ.get("HF_HOME")
+HF_DEFAULT_HOME = os.environ.get("HF_HOME", "")
 
 
-def download_save_huggingface_model(repo_id: str, revision: str, cache_dir: str):
+def download_save_huggingface_model(
+    repo_id: str, revision: str, cache_dir: str
+) -> None:
     """Download model from huggingface hub and save to cache_dir"""
     if cache_dir == "":
         cache_dir = HF_DEFAULT_HOME
@@ -33,20 +36,19 @@ def download_save_huggingface_model(repo_id: str, revision: str, cache_dir: str)
 
 def get_weight_dir(
     model_ref: str,
-    hf_cache_dir: Path = HF_DEFAULT_HOME,
+    hf_cache_dir: str | os.PathLike[Any] = HF_DEFAULT_HOME,
     revision: str = "main",
 ) -> Path:
     """
     Convenience function for retrieving locally stored HF weights.
     """
-    if not isinstance(hf_cache_dir, Path):
-        hf_cache_dir = Path(hf_cache_dir)
+    hf_cache_dir = Path(hf_cache_dir)
     model_path = "--".join(["models", *model_ref.split("/")])
     snapshot = (hf_cache_dir / f"{model_path}/refs/{revision}").read_text()
     return hf_cache_dir / f"{model_path}/snapshots/{snapshot}"
 
 
-def main():
+def main() -> None:
     """Run script from command line"""
     # Args
     parser = argparse.ArgumentParser()
