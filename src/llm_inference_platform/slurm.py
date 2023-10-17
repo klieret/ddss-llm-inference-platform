@@ -48,8 +48,10 @@ def get_slurm_job_status(job_id: str) -> tuple[str, JobState]:
         cmd,
         stderr=subprocess.STDOUT,
         universal_newlines=True,
-    )
+    ).strip()
     logger.debug("Got status string '%s'", status_str_full)
+    if not status_str_full:
+        return "", JobState.UNKNOWN
     status_str = status_str_full.splitlines()[0].strip()
     return status_str, JobState.from_status_str(status_str)
 
@@ -69,8 +71,8 @@ def get_slurm_start_time(job_id: str) -> str:
         cmd,
         stderr=subprocess.STDOUT,
         universal_newlines=True,
-    )
-    logger.debug("Got status string '%s'", start_time_str_full)
+    ).strip()
+    logger.debug("Got start time '%s'", start_time_str_full)
     return start_time_str_full.splitlines()[0].strip()
 
 
@@ -91,7 +93,8 @@ class WaitTillRunning:
             raise ValueError(msg)
 
     def wait(self) -> None:
-        self.user_feedback("Waiting for job %s to start...", self._job_id)
+        self.user_feedback(f"Waiting for job {self._job_id} to start...")
+        start_time = time.time()
         while True:
             status_str, status = get_slurm_job_status(sys.argv[1])
             logger.debug("Status: %s, %s", status_str, status)
@@ -110,15 +113,22 @@ class WaitTillRunning:
                     return False
                 case JobState.COMPLETED:
                     self.user_feedback(
-                        f"Job {self._job_id} already completed. Please start a new one"
+                        f"Job {self._job_id} already completed. Please start a new one."
                     )
                     return False
                 case JobState.UNKNOWN:
-                    self.user_feedback(
-                        f"Job {self._job_id} status unknown. Please report this.",
-                        level="error",
-                    )
-                    return False
+                    if time.time() - start_time < 30:
+                        self.user_feedback(
+                            f"Job {self._job_id} status unknown. Please wait a bit longer.",
+                            level="info",
+                        )
+                        time.sleep(self._poll_interval)
+                    else:
+                        self.user_feedback(
+                            f"Job {self._job_id} status unknown. Please report this.",
+                            level="error",
+                        )
+                        return False
 
 
 if __name__ == "__main__":
