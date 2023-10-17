@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import importlib.metadata
 
 import llm_inference_platform as m
