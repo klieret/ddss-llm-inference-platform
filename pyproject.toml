@@ -29,7 +29,8 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "gradio"
+    "gradio",
+    "colorlog"
 ]
 
 [project.optional-dependencies]
@@ -169,4 +170,5 @@ messages_control.disable = [
   "line-too-long",
   "missing-module-docstring",
   "wrong-import-position",
+  "missing-class-docstring",
 ]
