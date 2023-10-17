@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
 
-import logging
 import os
 import subprocess
 from pathlib import Path
 from typing import Any, Literal
+
+from llm_inference_platform.utils.log import logger
 
 # fixme
 # pylint: disable=missing-function-docstring
@@ -71,11 +72,11 @@ def construct_cmd(
 
 def launch_container(cmd: list[str]) -> None:
     # Launch
-    logging.info("Running %s", " ".join(cmd))
+    logger.info("Running %s", " ".join(cmd))
     # pylint: disable=consider-using-with
     process = subprocess.Popen(
         cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
     )
-    logging.info("Launching process with PID %s", process.pid)
+    logger.info("Launching process with PID %s", process.pid)
