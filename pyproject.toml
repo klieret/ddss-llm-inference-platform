@@ -98,6 +98,16 @@ disallow_untyped_defs = false
 disallow_incomplete_defs = false
 
 [[tool.mypy.overrides]]
+# https://github.com/huggingface/huggingface_hub/issues/1662
+module = "huggingface_hub.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+# https://github.com/gradio-app/gradio/issues/1728
+module = "gradio.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
 module = "llm_inference_platform.*"
 disallow_untyped_defs = true
 disallow_incomplete_defs = true

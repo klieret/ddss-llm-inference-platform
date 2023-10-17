@@ -96,7 +96,7 @@ def build_gradio_app(*, model_directory: Path) -> gr.Blocks:
     return app
 
 
-def main():
+def main() -> None:
     """Run the Gradio app from the CLI."""
     parser = get_cli()
     args = parser.parse_args()
