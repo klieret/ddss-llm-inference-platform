@@ -6,7 +6,7 @@ import time
 from enum import auto
 from typing import Literal, Self
 
-from utils.log import logger
+from llm_inference_platform.utils.log import logger
 
 
 class JobState(enum.Enum):
@@ -18,7 +18,8 @@ class JobState(enum.Enum):
     FAILED = auto()
     UNKNOWN = auto()
 
-    def from_status_str(status: str) -> Self:
+    @classmethod
+    def from_status_str(cls, status: str) -> Self:
         """Interpret output of SLURM job status command"""
         match status:
             case "RUNNING":
@@ -78,12 +79,19 @@ def get_slurm_start_time(job_id: str) -> str:
 
 class WaitTillRunning:
     def __init__(self, job_id: str, *, poll_interval: int = 10):
+        """Wait until a SLURM job is running
+
+        Args:
+            job_id: SLURM Job ID
+            poll_interval: How often to poll the SLURM cluster for job status
+        """
         self._job_id = job_id
         self._poll_interval = poll_interval
 
     def user_feedback(
         self, message: str, *, level: Literal["info", "error"] = "info"
     ) -> None:
+        """Log a message or update a dialogue box."""
         if level == "info":
             logger.info(message)
         elif level == "error":
@@ -93,17 +101,18 @@ class WaitTillRunning:
             raise ValueError(msg)
 
     def wait(self) -> None:
+        """Wait until job is running"""
         self.user_feedback(f"Waiting for job {self._job_id} to start...")
         start_time = time.time()
         while True:
-            status_str, status = get_slurm_job_status(sys.argv[1])
+            status_str, status = get_slurm_job_status(self._job_id)
             logger.debug("Status: %s, %s", status_str, status)
             match status:
                 case JobState.RUNNING:
                     self.user_feedback(f"Job {self._job_id} is running.")
                     return True
                 case JobState.PENDING:
-                    start_time = get_slurm_start_time(sys.argv[1])
+                    start_time = get_slurm_start_time(self._job_id)
                     self.user_feedback(
                         f"Job {self._job_id} is pending. Estimated start time {start_time}."
                     )
