@@ -2,10 +2,13 @@
 from __future__ import annotations
 
 import argparse
+import atexit
 import os
 import shlex
 import subprocess
+import sys
 import tempfile
+from functools import partial
 from pathlib import Path
 from typing import Any
 
@@ -204,19 +207,23 @@ def main() -> None:
     logger.debug("Singularity command: %s", shlex.join(cmd))
     script = format_slurm_submission_script(cmd)
     job_id = sbatch(script)
+    # Doesn't matter if slurm job is already dead before we call this
+    # cleanup, but need to make sure it never survives
+    atexit.register(partial(cancel_slurm_job, job_id))
     wtr = WaitTillRunning(job_id)
     success = wtr.wait()
     if not success:
-        msg = "Job failed to start, check log for details."
-        raise RuntimeError(msg)
+        msg = "Job failed to start, check SLURM log for details."
+        logger.critical(msg)
+        sys.exit(234)
     port = find_open_port()
     node = get_slurm_node(job_id)
     logger.info("Forwarding port 8000 on %s to localhost:%s", port, node)
     forward_process = forward_port(node, port, 8000)
-    logger.info("Press any key to quit")
-    input()
-    forward_process.terminate()
-    cancel_slurm_job(job_id)
+    atexit.register(
+        lambda: forward_process.terminate()  # pylint: disable=unnecessary-lambda
+    )
+    input("Press any key to quit.")
 
 
 if __name__ == "__main__":

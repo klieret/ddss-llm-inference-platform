@@ -104,6 +104,7 @@ def cancel_slurm_job(job_id: str) -> None:
     Args:
         job_id: The job ID of the job to cancel.
     """
+    logger.warning("Cancelling SLURM job %s. PLEASE WAIT!", job_id)
     cmd = ["scancel", job_id]
     logger.debug("Canceling SLURM job with '%s'", shlex.join(cmd))
     subprocess.check_output(
