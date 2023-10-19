@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import enum
+import shlex
 import subprocess
 import time
 from enum import auto
@@ -75,6 +76,42 @@ def get_slurm_start_time(job_id: str) -> str:
     ).strip()
     logger.debug("Got start time '%s'", start_time_str_full)
     return start_time_str_full.splitlines()[0].strip()
+
+
+def get_slurm_node(job_id: str) -> str:
+    """Get the node of a job on the SLURM cluster.
+
+    Args:
+        job_id: The job ID of the job to get the node of.
+
+    Returns:
+        The node of the job as a string.
+    """
+    cmd = ["squeue", "-j", job_id, "--noheader", "--format=%N"]
+    logger.debug("Getting SLURM node with '%s'", shlex.join(cmd))
+    node_str_full = subprocess.check_output(
+        cmd,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+    ).strip()
+    logger.debug("Got node '%s'", node_str_full)
+    return node_str_full.splitlines()[0].strip()
+
+
+def cancel_slurm_job(job_id: str) -> None:
+    """Cancel a job on the SLURM cluster.
+
+    Args:
+        job_id: The job ID of the job to cancel.
+    """
+    cmd = ["scancel", job_id]
+    logger.debug("Canceling SLURM job with '%s'", shlex.join(cmd))
+    subprocess.check_output(
+        cmd,
+        stderr=subprocess.STDOUT,
+        universal_newlines=True,
+    ).strip()
+    logger.debug("Canceled job '%s'", job_id)
 
 
 class WaitTillRunning:
