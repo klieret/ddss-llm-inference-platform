@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 import atexit
+import json
 import os
 import shlex
 import subprocess
@@ -10,7 +11,7 @@ import sys
 import tempfile
 from functools import partial
 from pathlib import Path
-from typing import Any
+from typing import Any, NamedTuple
 
 import jinja2
 
@@ -193,6 +194,32 @@ def cli() -> argparse.ArgumentParser:
     return parser
 
 
+class PersistInfo(NamedTuple):
+    """Information to write to a file in user's home directory"""
+
+    job_id: str
+    port: str
+    node: str
+
+    def dump(self, path: Path) -> None:
+        """Dump information to a file"""
+        with path.open("w") as f:
+            json.dump(self._asdict(), f)  # pylint: disable=no-member
+
+    @classmethod
+    def from_file(cls, path: Path) -> PersistInfo:
+        """Load information from a file"""
+        with path.open("r") as f:
+            dct = json.load(f)
+        return cls(**dct)
+
+
+def terminate_process(process: subprocess.Popen[Any]) -> None:
+    """Terminate process and log it"""
+    logger.debug("Terminating process with PID %s", process.pid)
+    process.terminate()
+
+
 def main() -> None:
     args = cli().parse_args()
     assert args.dir.is_dir()
@@ -221,8 +248,11 @@ def main() -> None:
     logger.info("Forwarding port 8000 on %s to localhost:%s", port, node)
     forward_process = forward_port(node, port, 8000)
     atexit.register(
-        lambda: forward_process.terminate()  # pylint: disable=unnecessary-lambda
+        lambda: terminate_process(forward_process)  # pylint: disable=unnecessary-lambda
     )
+    persist_path = Path.home() / ".llm_inference_platform.json"
+    PersistInfo(job_id, port, node).dump(persist_path)
+    atexit.register(lambda: persist_path.unlink())  # pylint: disable=unnecessary-lambda
     input("Press any key to quit.")
 
 
