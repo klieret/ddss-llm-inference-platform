@@ -5,6 +5,7 @@ import argparse
 import os
 import shlex
 import subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any
@@ -208,7 +209,8 @@ def main() -> None:
     success = wtr.wait()
     if not success:
         msg = "Job failed to start, check log for details."
-        raise RuntimeError(msg)
+        logger.critical(msg)
+        sys.exit(234)
     port = find_open_port()
     node = get_slurm_node(job_id)
     logger.info("Forwarding port 8000 on %s to localhost:%s", port, node)
