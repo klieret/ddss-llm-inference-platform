@@ -22,7 +22,7 @@ from typing import Any
 
 from huggingface_hub import snapshot_download
 
-HF_DEFAULT_HOME = os.environ.get("HF_HOME", "")
+HF_DEFAULT_HOME = os.environ.get("HF_HOME", ".")
 
 
 def download_save_huggingface_model(
@@ -57,7 +57,7 @@ def main() -> None:
     parser.add_argument(
         "--cache_dir",
         type=str,
-        default="",
+        default=HF_DEFAULT_HOME,
         help="Location to save model, defaults to None",
     )
     args = parser.parse_args()

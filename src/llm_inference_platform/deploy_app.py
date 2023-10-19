@@ -7,7 +7,10 @@ from pathlib import Path
 
 import gradio as gr
 
-from llm_inference_platform.deploy import construct_cmd, list_available_models
+from llm_inference_platform.deploy import (
+    construct_singularity_cmd,
+    list_available_models,
+)
 
 
 def get_cli() -> argparse.ArgumentParser:
@@ -40,10 +43,11 @@ def build_gradio_app(*, model_directory: Path) -> gr.Blocks:
             label="Command to evaluate",
             lines=11,
             value=" ".join(
-                construct_cmd(
+                construct_singularity_cmd(
                     model_name=model_dropdown.value,
                     model_dir=model_directory,
                     quantization=qtz_dropdown.value,
+                    revision=None,
                 )
             ),
         )
@@ -54,10 +58,11 @@ def build_gradio_app(*, model_directory: Path) -> gr.Blocks:
             lambda choice: (
                 choice,
                 " ".join(
-                    construct_cmd(
+                    construct_singularity_cmd(
                         model_name=model_dropdown.value,
                         model_dir=model_directory,
                         quantization=qtz_dropdown.value,
+                        revision=None,
                     )
                 ),
             ),
@@ -69,10 +74,11 @@ def build_gradio_app(*, model_directory: Path) -> gr.Blocks:
             lambda choice: (
                 choice,
                 " ".join(
-                    construct_cmd(
+                    construct_singularity_cmd(
                         model_name=model_dropdown.value,
                         model_dir=model_directory,
                         quantization=qtz_dropdown.value,
+                        revision=None,
                     )
                 ),
             ),
@@ -82,10 +88,11 @@ def build_gradio_app(*, model_directory: Path) -> gr.Blocks:
 
         preview_btn.click(
             fn=lambda _: " ".join(
-                construct_cmd(
+                construct_singularity_cmd(
                     model_name=model_dropdown.value,
                     model_dir=model_directory,
                     quantization=qtz_dropdown.value,
+                    revision=None,
                 )
             ),
             inputs=[],

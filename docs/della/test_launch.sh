@@ -11,4 +11,4 @@ singularity run \
   --env HF_HUB_OFFLINE=1 \
   text-generation-inference_latest.sif \
   --model-id=/data/models--meta-llama--Llama-2-7b-chat-hf/snapshots/08751db2aca9bf2f7f80d2e516117a53d7450235 \
-  -p 8080
+  ep 8080
