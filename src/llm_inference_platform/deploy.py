@@ -11,7 +11,12 @@ from typing import Any
 
 import jinja2
 
-from llm_inference_platform.slurm import WaitTillRunning
+from llm_inference_platform.slurm import (
+    WaitTillRunning,
+    cancel_slurm_job,
+    get_slurm_node,
+)
+from llm_inference_platform.ssh import find_open_port, forward_port
 from llm_inference_platform.utils.log import logger
 
 # fixme
@@ -200,7 +205,18 @@ def main() -> None:
     script = format_slurm_submission_script(cmd)
     job_id = sbatch(script)
     wtr = WaitTillRunning(job_id)
-    wtr.wait()
+    success = wtr.wait()
+    if not success:
+        msg = "Job failed to start, check log for details."
+        raise RuntimeError(msg)
+    port = find_open_port()
+    node = get_slurm_node(job_id)
+    logger.info("Forwarding port 8000 on %s to localhost:%s", port, node)
+    forward_process = forward_port(node, port, 8000)
+    logger.info("Press any key to quit")
+    input()
+    forward_process.terminate()
+    cancel_slurm_job(job_id)
 
 
 if __name__ == "__main__":
