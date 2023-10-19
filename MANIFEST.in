@@ -1,0 +1,1 @@
+include src/llm_inference_platform/slurm_template.slurm

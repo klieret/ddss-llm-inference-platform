@@ -108,19 +108,25 @@ class WaitTillRunning:
         """
         self.user_feedback(f"Waiting for job {self._job_id} to start...")
         start_time = time.time()
+        iter_running = 0
         while True:
             status_str, status = get_slurm_job_status(self._job_id)
             logger.debug("Status: %s, %s", status_str, status)
             match status:
                 case JobState.RUNNING:
-                    self.user_feedback(f"Job {self._job_id} is running.")
-                    return True
+                    if iter_running == 0:
+                        self.user_feedback(
+                            f"Job {self._job_id} is running. Will wait one more iteration to make "
+                            "sure it doesn't immediately fail."
+                        )
+                        iter_running += 1
+                    else:
+                        return True
                 case JobState.PENDING:
                     expected_start_time = get_slurm_start_time(self._job_id)
                     self.user_feedback(
                         f"Job {self._job_id} is pending. Estimated start time {expected_start_time}."
                     )
-                    time.sleep(self._poll_interval)
                 case JobState.FAILED:
                     self.user_feedback(f"Job {self._job_id} failed.", level="error")
                     return False
@@ -135,13 +141,13 @@ class WaitTillRunning:
                             f"Job {self._job_id} status unknown. Please wait a bit longer.",
                             level="info",
                         )
-                        time.sleep(self._poll_interval)
                     else:
                         self.user_feedback(
                             f"Job {self._job_id} status unknown. Please report this.",
                             level="error",
                         )
                         return False
+            time.sleep(self._poll_interval)
 
 
 if __name__ == "__main__":
