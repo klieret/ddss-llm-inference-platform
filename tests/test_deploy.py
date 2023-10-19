@@ -1,3 +1,5 @@
+import shlex
+
 from llm_inference_platform.deploy import format_slurm_submission_script
 
 
@@ -7,5 +9,5 @@ def test_format_slurm_submission_script():
     email = "test@testmail.com"
     script = format_slurm_submission_script(cmd, email)
     assert email in script
-    assert " ".join(cmd) in script
+    assert shlex.join(cmd) in script
     assert "{{" not in script
