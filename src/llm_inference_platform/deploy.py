@@ -23,9 +23,6 @@ from llm_inference_platform.slurm import (
 from llm_inference_platform.ssh import find_open_port, forward_port
 from llm_inference_platform.utils.log import logger
 
-# fixme
-# pylint: disable=missing-function-docstring
-
 
 def list_available_models(
     model_directory: str | os.PathLike[Any] = Path("./models"),
@@ -41,6 +38,10 @@ def construct_docker_cmd(
     quantization: str = "None",
     context_length: int = 2048,
 ) -> list[str]:
+    """Run text-generation-inference in a Docker container
+
+    See `construct_singularity_cmd` for parameters.
+    """
     return [
         "docker",
         "run",
@@ -67,6 +68,24 @@ def construct_singularity_cmd(
     context_length: int = 2048,
     extra_args: list[str] | None = None,
 ) -> list[str]:
+    """Run ``text-generation-inference`` in singularity container
+
+    Args:
+        model_name (str): Name of model
+        revision (str | None): Version/revision of model
+        model_dir (Path, optional): Directory with models saved for offline use.
+            Defaults to Path("./models").
+        quantization (str | None, optional): Quantization of model. Defaults to None.
+        context_length (int, optional): Context length of model. Defaults to 2048.
+        extra_args (list[str] | None, optional): Extra arguments passed to
+            ``text-generation-inference``. Defaults to None.
+
+    Raises:
+        NotImplementedError: _description_
+
+    Returns:
+        list[str]: _description_
+    """
     if extra_args is None:
         extra_args = []
     if revision is None:
@@ -151,6 +170,7 @@ def sbatch(script: str) -> str:
 
 
 def cli() -> argparse.ArgumentParser:
+    """Command line interface"""
     parser = argparse.ArgumentParser(
         description="Submit a container to the SLURM cluster",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
@@ -221,6 +241,7 @@ def terminate_process(process: subprocess.Popen[Any]) -> None:
 
 
 def main() -> None:
+    """Run command line interface"""
     args = cli().parse_args()
     assert args.dir.is_dir()
     cmd = construct_singularity_cmd(
