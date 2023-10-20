@@ -113,18 +113,6 @@ def construct_singularity_cmd(
     return cmd
 
 
-def launch_container(cmd: list[str]) -> None:
-    # Launch
-    logger.info("Running %s", shlex.join(cmd))
-    # pylint: disable=consider-using-with
-    process = subprocess.Popen(
-        cmd,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    logger.info("Launching process with PID %s", process.pid)
-
-
 def format_slurm_submission_script(cmd: list[str], email: str = "") -> str:
     """Format a SLURM submission script
 
