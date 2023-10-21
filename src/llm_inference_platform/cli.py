@@ -19,7 +19,8 @@ def get_cli() -> argparse.ArgumentParser:
 def main() -> None:
     """Run main command line interface"""
     parser = get_cli()
-    parser.parse_args()
+    args = parser.parse_args()
+    args.func(args)
 
 
 if __name__ == "__main__":
