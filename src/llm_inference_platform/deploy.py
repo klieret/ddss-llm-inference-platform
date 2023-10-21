@@ -222,17 +222,13 @@ def terminate_process(process: subprocess.Popen[Any]) -> None:
     process.terminate()
 
 
-def deploy_cli(args: argparse.Namespace) -> None:
-    """Run deployment from CLI"""
-    assert args.dir.is_dir()
-    cmd = construct_singularity_cmd(
-        model_name=args.name,
-        model_dir=args.dir,
-        quantization=args.quantization,
-        context_length=args.context_length,
-        extra_args=args.extra_args,
-        revision=args.revision,
-    )
+def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
+    """Deploy a model to the cluster.
+
+    Args:
+        See `construct_singularity_cmd` for arguments.
+    """
+    cmd = construct_singularity_cmd(**kwargs)
     logger.debug("Singularity command: %s", shlex.join(cmd))
     script = format_slurm_submission_script(cmd)
     job_id = sbatch(script)
@@ -256,3 +252,15 @@ def deploy_cli(args: argparse.Namespace) -> None:
     PersistInfo(job_id, port, node).dump(persist_path)
     atexit.register(lambda: persist_path.unlink())  # pylint: disable=unnecessary-lambda
     input("Press any key to quit.")
+
+
+def deploy_cli(args: argparse.Namespace) -> None:
+    """Run deployment from CLI"""
+    deploy(
+        model_name=args.name,
+        revision=args.revision,
+        model_dir=args.dir,
+        quantization=args.quantization,
+        context_length=args.context_length,
+        extra_args=args.extra_args,
+    )
