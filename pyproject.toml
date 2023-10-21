@@ -36,6 +36,9 @@ dependencies = [
     "huggingface_hub",
 ]
 
+[project.scripts]
+llm-inference-platform = "llm_inference_platform.cli:main"
+
 [project.optional-dependencies]
 test = [
   "pytest >=6",

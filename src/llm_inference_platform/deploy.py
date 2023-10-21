@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from __future__ import annotations
 
 import argparse
@@ -157,12 +156,8 @@ def sbatch(script: str) -> str:
     return job_id
 
 
-def cli() -> argparse.ArgumentParser:
-    """Command line interface"""
-    parser = argparse.ArgumentParser(
-        description="Submit a container to the SLURM cluster",
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-    )
+def add_cli_options(parser: argparse.ArgumentParser) -> None:
+    """Add command line arguments to existing parser"""
     parser.add_argument(
         "--name",
         type=str,
@@ -199,7 +194,6 @@ def cli() -> argparse.ArgumentParser:
         help="Extra arguments to pass to text-generation-inference",
         default=None,
     )
-    return parser
 
 
 class PersistInfo(NamedTuple):
@@ -228,9 +222,8 @@ def terminate_process(process: subprocess.Popen[Any]) -> None:
     process.terminate()
 
 
-def main() -> None:
-    """Run command line interface"""
-    args = cli().parse_args()
+def deploy_cli(args: argparse.Namespace) -> None:
+    """Run deployment from CLI"""
     assert args.dir.is_dir()
     cmd = construct_singularity_cmd(
         model_name=args.name,
@@ -263,7 +256,3 @@ def main() -> None:
     PersistInfo(job_id, port, node).dump(persist_path)
     atexit.register(lambda: persist_path.unlink())  # pylint: disable=unnecessary-lambda
     input("Press any key to quit.")
-
-
-if __name__ == "__main__":
-    main()
