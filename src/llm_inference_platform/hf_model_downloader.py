@@ -1,5 +1,3 @@
-#! /usr/bin/python3
-
 # HuggingFace Model Downloader Script
 # Author: Dr Musashi Hinck
 #
@@ -48,10 +46,7 @@ def get_weight_dir(
     return hf_cache_dir / f"{model_path}/snapshots/{snapshot}"
 
 
-def main() -> None:
-    """Run script from command line"""
-    # Args
-    parser = argparse.ArgumentParser()
+def add_cli_args(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--repo_id", type=str, help="HF Model Hub Repo ID")
     parser.add_argument("--revision", type=str, default="main")
     parser.add_argument(
@@ -60,11 +55,8 @@ def main() -> None:
         default=HF_DEFAULT_HOME,
         help="Location to save model, defaults to None",
     )
-    args = parser.parse_args()
 
-    # Call
+
+def download_cli(args: argparse.Namespace) -> None:
+    """Run script from command line"""
     download_save_huggingface_model(args.repo_id, args.revision, args.cache_dir)
-
-
-if __name__ == "__main__":
-    main()
