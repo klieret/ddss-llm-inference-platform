@@ -7,7 +7,6 @@ import os
 import shlex
 import subprocess
 import sys
-import tempfile
 from functools import partial
 from pathlib import Path
 from typing import Any, NamedTuple
@@ -18,6 +17,7 @@ from llm_inference_platform.slurm import (
     WaitTillRunning,
     cancel_slurm_job,
     get_slurm_node,
+    sbatch,
 )
 from llm_inference_platform.ssh import find_open_port, forward_port
 from llm_inference_platform.utils.log import logger
@@ -125,35 +125,6 @@ def format_slurm_submission_script(cmd: list[str], email: str = "") -> str:
     with template_file.open() as f:
         template = jinja2.Template(f.read())
     return template.render(cmd=shlex.join(cmd), email=email)  # type: ignore[no-any-return]
-
-
-def sbatch(script: str) -> str:
-    """Submits a SLURM script to the cluster
-
-    Returns:
-        Job ID
-    """
-    f = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
-        mode="w", delete=False
-    )
-    f.write(script)
-    f.close()
-    logger.debug("Wrote SLURM script to %s", f.name)
-    cmd = ["sbatch", f.name]
-    logger.debug("Submitting SLURM job: %s", shlex.join(cmd))
-    output: str = subprocess.check_output(
-        cmd,
-        stderr=subprocess.STDOUT,
-        encoding="UTF-8",
-    )
-    logger.debug("Output: %s", output)
-    prefix = "Submitted batch job "
-    if prefix not in output:
-        msg = f"Could not submit job: {output}"
-        raise RuntimeError(msg)
-    job_id = output.split(prefix)[1].strip()
-    assert job_id
-    return job_id
 
 
 def add_cli_options(parser: argparse.ArgumentParser) -> None:
