@@ -51,7 +51,7 @@ def get_slurm_job_status(job_id: str) -> tuple[str, JobState]:
         stderr=subprocess.STDOUT,
         universal_newlines=True,
     ).strip()
-    logger.debug("Got status string '%s'", status_str_full)
+    logger.debug("Got status string '%r'", status_str_full)
     if not status_str_full:
         return "", JobState.UNKNOWN
     status_str = status_str_full.splitlines()[0].strip()
@@ -74,7 +74,7 @@ def get_slurm_start_time(job_id: str) -> str:
         stderr=subprocess.STDOUT,
         universal_newlines=True,
     ).strip()
-    logger.debug("Got start time '%s'", start_time_str_full)
+    logger.debug("Got start time '%r'", start_time_str_full)
     return start_time_str_full.splitlines()[0].strip()
 
 
@@ -94,7 +94,7 @@ def get_slurm_node(job_id: str) -> str:
         stderr=subprocess.STDOUT,
         universal_newlines=True,
     ).strip()
-    logger.debug("Got node '%s'", node_str_full)
+    logger.debug("Got node '%r'", node_str_full)
     return node_str_full.splitlines()[0].strip()
 
 
