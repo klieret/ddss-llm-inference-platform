@@ -29,7 +29,11 @@ classifiers = [
 ]
 dynamic = ["version"]
 dependencies = [
-    "colorlog"
+    "colorlog",
+    "gradio",
+    "colorlog",
+    "jinja2",
+    "huggingface_hub",
 ]
 
 [project.optional-dependencies]
