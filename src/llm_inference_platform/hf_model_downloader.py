@@ -47,6 +47,7 @@ def get_weight_dir(
 
 
 def add_cli_args(parser: argparse.ArgumentParser) -> None:
+    """Add command line arguments to existing parser"""
     parser.add_argument("--repo_id", type=str, help="HF Model Hub Repo ID")
     parser.add_argument("--revision", type=str, default="main")
     parser.add_argument(

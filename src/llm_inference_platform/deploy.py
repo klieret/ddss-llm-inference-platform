@@ -156,7 +156,8 @@ def sbatch(script: str) -> str:
     return job_id
 
 
-def add_cli_options(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+def add_cli_options(parser: argparse.ArgumentParser) -> None:
+    """Add command line arguments to existing parser"""
     parser.add_argument(
         "--name",
         type=str,
@@ -193,7 +194,6 @@ def add_cli_options(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
         help="Extra arguments to pass to text-generation-inference",
         default=None,
     )
-    return parser
 
 
 class PersistInfo(NamedTuple):
@@ -223,6 +223,7 @@ def terminate_process(process: subprocess.Popen[Any]) -> None:
 
 
 def deploy_cli(args: argparse.Namespace) -> None:
+    """Run deployment from CLI"""
     assert args.dir.is_dir()
     cmd = construct_singularity_cmd(
         model_name=args.name,

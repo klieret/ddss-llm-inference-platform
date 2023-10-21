@@ -1,10 +1,10 @@
 import argparse
 
-import llm_inference_platform.deploy as deploy
-import llm_inference_platform.hf_model_downloader as hf_model_downloader
+from llm_inference_platform import deploy, hf_model_downloader
 
 
 def get_cli() -> argparse.ArgumentParser:
+    """Get main command line interface"""
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(required=True)
     deploy_parser = subparsers.add_parser("deploy")
@@ -17,6 +17,7 @@ def get_cli() -> argparse.ArgumentParser:
 
 
 def main() -> None:
+    """Run main command line interface"""
     parser = get_cli()
     parser.parse_args()
 
