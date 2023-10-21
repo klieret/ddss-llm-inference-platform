@@ -3,6 +3,7 @@ from __future__ import annotations
 import enum
 import shlex
 import subprocess
+import tempfile
 import time
 from enum import auto
 from typing import Literal
@@ -193,3 +194,32 @@ if __name__ == "__main__":
 
     wtr = WaitTillRunning(sys.argv[1])
     wtr.wait()
+
+
+def sbatch(script: str) -> str:
+    """Submits a SLURM script to the cluster
+
+    Returns:
+        Job ID
+    """
+    f = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
+        mode="w", delete=False
+    )
+    f.write(script)
+    f.close()
+    logger.debug("Wrote SLURM script to %s", f.name)
+    cmd = ["sbatch", f.name]
+    logger.debug("Submitting SLURM job: %s", shlex.join(cmd))
+    output: str = subprocess.check_output(
+        cmd,
+        stderr=subprocess.STDOUT,
+        encoding="UTF-8",
+    )
+    logger.debug("Output: %s", output)
+    prefix = "Submitted batch job "
+    if prefix not in output:
+        msg = f"Could not submit job: {output}"
+        raise RuntimeError(msg)
+    job_id = output.split(prefix)[1].strip()
+    assert job_id
+    return job_id
