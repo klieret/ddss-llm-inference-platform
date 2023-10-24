@@ -46,10 +46,6 @@ In addition, `nox` provides the following:
 
 ### Inference Container
 
-_Active Issues_:
-
-- [#3](https://github.com/princeton-ddss/llm-inference-platform/issues/3)
-
 We are using the
 [`text-generation-inference`](https://github.com/huggingface/text-generation-inference)
 (TGI) container from HuggingFace (HF).
@@ -68,9 +64,7 @@ compute nodes.
 
 ### Web GUI
 
-_Active Issues_:
-
-- [#4](https://github.com/princeton-ddss/llm-inference-platform/issues/4)
+**WIP: solution still under discussion.**
 
 Web GUI that basically exposes all of the TGI options via dropdown menus with
 explanations of what they do/the trade-off they provide.
@@ -84,11 +78,3 @@ _Resource Selection_:
 
 For known architectures, optimal resource requests can be calculated with
 testing and then used to populate the form.
-
-### Web Server
-
-_tbc_
-
-- Access to compute nodes **necessary**.
-- Outside access only from within VPN **highly desirable** (because this
-  simplifies authentication issues).
