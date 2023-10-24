@@ -8,6 +8,7 @@
 
 ```{toctree}
 readme.md
+usage.md
 della/README.md
 local/README.md
 ```

@@ -25,7 +25,7 @@ _In broad terms_
 Installation
 
 ```bash
-pip3 install --editable '.[dev,test,docs]
+pip3 install --editable '.[dev,test,docs]'
 ```
 
 Please also install the pre-commit hook:
