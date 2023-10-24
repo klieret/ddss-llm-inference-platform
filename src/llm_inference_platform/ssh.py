@@ -19,7 +19,7 @@ def forward_port(
     node: str, origin: str | int, target: str | int
 ) -> subprocess.Popen[Any]:
     """Forward port from local machine to remote machine"""
-    cmd = ["ssh", "-N", "-f", "-L", f"{origin}:localhost:{target}", f"{node}"]
+    cmd = ["ssh", "-N", "-L", f"{origin}:localhost:{target}", f"{node}"]
     logger.debug("Running command: %s", shlex.join(cmd))
     return subprocess.Popen(
         cmd,

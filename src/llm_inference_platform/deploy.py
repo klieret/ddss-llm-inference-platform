@@ -7,6 +7,7 @@ import os
 import shlex
 import subprocess
 import sys
+import time
 from functools import partial
 from pathlib import Path
 from typing import Any, NamedTuple
@@ -14,8 +15,10 @@ from typing import Any, NamedTuple
 import jinja2
 
 from llm_inference_platform.slurm import (
+    JobState,
     WaitTillRunning,
     cancel_slurm_job,
+    get_slurm_job_status,
     get_slurm_node,
     sbatch,
 )
@@ -222,7 +225,21 @@ def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
     persist_path = Path.home() / ".llm_inference_platform.json"
     PersistInfo(job_id, port, node).dump(persist_path)
     atexit.register(lambda: persist_path.unlink())  # pylint: disable=unnecessary-lambda
-    input("Press any key to quit.")
+    print("Press Ctrl + C once (!) to quit.")  # noqa: T201
+    while True:
+        if forward_process.poll() is not None:
+            logger.critical("Port forwarding process died unexpectedly. Quitting")
+            sys.exit(125)
+        status_str, status = get_slurm_job_status(job_id)
+        if status == JobState.RUNNING:
+            pass
+        elif status == JobState.COMPLETED:
+            logger.info("Job completed successfully.")
+            sys.exit(0)
+        else:
+            logger.critical("Job failed with status: %s", status_str)
+            sys.exit(123)
+        time.sleep(1)
 
 
 def deploy_cli(args: argparse.Namespace) -> None:
