@@ -209,9 +209,11 @@ def print_usage_instructions(port: str) -> None:
         "   Afterwards, connect as in option 1."
     )
     print("Press Ctrl + C once (!) to quit.")
+
+
 def print_debug_information(job_id: str | None = None) -> None:
     """Print debug information at the end of the script"""
-    print(  # noqa: T201
+    print(
         "If this script failed or did not work as expected, please include the "
         "debug output in your report. It is saved in the file: "
         f"{DEFAULT_LOGGER_PATH}. "
@@ -219,9 +221,7 @@ def print_debug_information(job_id: str | None = None) -> None:
     if job_id is not None:
         log_file = Path(f"llm-inference-platform-{job_id}.log")
         if log_file.is_file():
-            print(  # noqa: T201
-                f"Please also include the SLURM log file for job: {log_file}"
-            )
+            print(f"Please also include the SLURM log file for job: {log_file}")
 
 
 def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
