@@ -149,6 +149,7 @@ select = [
 extend-ignore = [
   "PLR",    # Design related pylint codes
   "E501",   # Line too long
+  "T201",   # no print
 ]
 src = ["src"]
 unfixable = [

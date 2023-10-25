@@ -196,6 +196,22 @@ def terminate_process(process: subprocess.Popen[Any]) -> None:
     process.terminate()
 
 
+def print_usage_instructions(port: str) -> None:
+    """Tell user what SSH command to run on their own machine"""
+    print("Model deployed successfully. Here are your options to connect to the model:")
+    print(
+        f"1. If you are working on the della-gpu (head) node, no steps are necessary. "
+        f"Simply connect to localhost:{port}."
+    )
+    user_id = os.environ.get("USER")
+    print(
+        "2. If you are working somewhere else run the following command: "
+        f"ssh -N -f -L 8000:della-gpu:{port} {user_id}@della-gpu.princeton.edu\n"
+        "   Afterwards, connect as in option 1."
+    )
+    print("Press Ctrl + C once (!) to quit.")
+
+
 def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
     """Deploy a model to the cluster.
 
@@ -225,7 +241,7 @@ def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
     persist_path = Path.home() / ".llm_inference_platform.json"
     PersistInfo(job_id, port, node).dump(persist_path)
     atexit.register(lambda: persist_path.unlink())  # pylint: disable=unnecessary-lambda
-    print("Press Ctrl + C once (!) to quit.")  # noqa: T201
+    print_usage_instructions(port)
     while True:
         if forward_process.poll() is not None:
             logger.critical("Port forwarding process died unexpectedly. Quitting")
