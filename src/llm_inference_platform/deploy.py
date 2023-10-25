@@ -234,7 +234,7 @@ def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
         sys.exit(234)
     port = find_open_port()
     node = get_slurm_node(job_id)
-    logger.info("Forwarding port 8000 on %s to localhost:%s", port, node)
+    logger.info("Forwarding port 8000 on %s to localhost:%s", node, port)
     forward_process = forward_port(node, port, 8000)
     atexit.register(terminate_process, forward_process)
     persist_path = Path.home() / ".llm_inference_platform.json"
