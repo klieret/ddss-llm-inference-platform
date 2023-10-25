@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import logging
+from datetime import datetime
+from pathlib import Path
 
 import colorlog
 
-LOG_DEFAULT_LEVEL = logging.DEBUG
 
-
-def get_logger(name: str = "llmip", level: int = LOG_DEFAULT_LEVEL) -> logging.Logger:
+def get_logger(
+    name: str = "llmip", level: int = logging.INFO, log_path: Path | None = None
+) -> logging.Logger:
     """Sets up global logger."""
     _log: logging.Logger = colorlog.getLogger(name)
 
@@ -19,6 +21,17 @@ def get_logger(name: str = "llmip", level: int = LOG_DEFAULT_LEVEL) -> logging.L
 
     _log.setLevel(level)
 
+    if log_path is not None:
+        # Add a file handler to write log messages to a file
+        fh = logging.FileHandler(log_path)
+        fh.setLevel(logging.DEBUG)
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
+        fh.setFormatter(formatter)
+        _log.addHandler(fh)
+
+    # Add a stream handler to write log messages to the console
     sh = colorlog.StreamHandler()
     log_colors = {
         "DEBUG": "cyan",
@@ -47,4 +60,12 @@ def get_logger(name: str = "llmip", level: int = LOG_DEFAULT_LEVEL) -> logging.L
     return _log
 
 
-logger = get_logger()
+def get_default_logger_path() -> Path:
+    """Get path for default logger"""
+    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+    return Path(f"llmip-{timestamp}.log")
+
+
+DEFAULT_LOGGER_PATH = get_default_logger_path()
+
+logger = get_logger(log_path=DEFAULT_LOGGER_PATH)
