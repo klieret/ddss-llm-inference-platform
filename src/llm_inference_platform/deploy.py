@@ -8,7 +8,6 @@ import shlex
 import subprocess
 import sys
 import time
-from functools import partial
 from pathlib import Path
 from typing import Any, NamedTuple
 
@@ -23,7 +22,7 @@ from llm_inference_platform.slurm import (
     sbatch,
 )
 from llm_inference_platform.ssh import find_open_port, forward_port
-from llm_inference_platform.utils.log import logger
+from llm_inference_platform.utils.log import DEFAULT_LOGGER_PATH, logger
 
 
 def list_available_models(
@@ -210,6 +209,19 @@ def print_usage_instructions(port: str) -> None:
         "   Afterwards, connect as in option 1."
     )
     print("Press Ctrl + C once (!) to quit.")
+def print_debug_information(job_id: str | None = None) -> None:
+    """Print debug information at the end of the script"""
+    print(  # noqa: T201
+        "If this script failed or did not work as expected, please include the "
+        "debug output in your report. It is saved in the file: "
+        f"{DEFAULT_LOGGER_PATH}. "
+    )
+    if job_id is not None:
+        log_file = Path(f"llm-inference-platform-{job_id}.log")
+        if log_file.is_file():
+            print(  # noqa: T201
+                f"Please also include the SLURM log file for job: {log_file}"
+            )
 
 
 def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
@@ -218,14 +230,17 @@ def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
     Args:
         See `construct_singularity_cmd` for arguments.
     """
+    atexit.register(print_debug_information)
     cmd = construct_singularity_cmd(**kwargs)
     logger.debug("Singularity command: %s", shlex.join(cmd))
     script = format_slurm_submission_script(cmd)
     job_id = sbatch(script)
     # Doesn't matter if slurm job is already dead before we call this
     # cleanup, but need to make sure it never survives
-    atexit.register(partial(cancel_slurm_job, job_id))
+    atexit.register(cancel_slurm_job, job_id)
     wtr = WaitTillRunning(job_id)
+    atexit.unregister(print_debug_information)
+    atexit.register(print_debug_information, job_id)
     success = wtr.wait()
     if not success:
         msg = "Job failed to start, check SLURM log for details."
@@ -233,29 +248,30 @@ def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
         sys.exit(234)
     port = find_open_port()
     node = get_slurm_node(job_id)
-    logger.info("Forwarding port 8000 on %s to localhost:%s", port, node)
+    logger.info("Forwarding port 8000 on %s to localhost:%s", node, port)
     forward_process = forward_port(node, port, 8000)
-    atexit.register(
-        lambda: terminate_process(forward_process)  # pylint: disable=unnecessary-lambda
-    )
+    atexit.register(terminate_process, forward_process)
     persist_path = Path.home() / ".llm_inference_platform.json"
     PersistInfo(job_id, port, node).dump(persist_path)
     atexit.register(lambda: persist_path.unlink())  # pylint: disable=unnecessary-lambda
     print_usage_instructions(port)
-    while True:
-        if forward_process.poll() is not None:
-            logger.critical("Port forwarding process died unexpectedly. Quitting")
-            sys.exit(125)
-        status_str, status = get_slurm_job_status(job_id)
-        if status == JobState.RUNNING:
-            pass
-        elif status == JobState.COMPLETED:
-            logger.info("Job completed successfully.")
-            sys.exit(0)
-        else:
-            logger.critical("Job failed with status: %s", status_str)
-            sys.exit(123)
-        time.sleep(1)
+    try:
+        while True:
+            if forward_process.poll() is not None:
+                logger.critical("Port forwarding process died unexpectedly. Quitting")
+                sys.exit(125)
+            status_str, status = get_slurm_job_status(job_id)
+            if status == JobState.RUNNING:
+                pass
+            elif status == JobState.COMPLETED:
+                logger.info("Job completed successfully.")
+                sys.exit(0)
+            else:
+                logger.critical("Job failed with status: %s", status_str)
+                sys.exit(123)
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
 
 
 def deploy_cli(args: argparse.Namespace) -> None:
