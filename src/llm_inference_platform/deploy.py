@@ -8,7 +8,6 @@ import shlex
 import subprocess
 import sys
 import time
-from functools import partial
 from pathlib import Path
 from typing import Any, NamedTuple
 
@@ -196,12 +195,19 @@ def terminate_process(process: subprocess.Popen[Any]) -> None:
     process.terminate()
 
 
-def print_debug_information() -> None:
+def print_debug_information(job_id: str | None = None) -> None:
+    """Print debug information at the end of the script"""
     print(  # noqa: T201
         "If this script failed or did not work as expected, please include the "
         "debug output in your report. It is saved in the file: "
-        f"{DEFAULT_LOGGER_PATH}"
+        f"{DEFAULT_LOGGER_PATH}. "
     )
+    if job_id is not None:
+        log_file = Path(f"llm-inference-platform-{job_id}.log")
+        if log_file.is_file():
+            print(  # noqa: T201
+                f"Please also include the SLURM log file for job: {log_file}"
+            )
 
 
 def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
@@ -217,8 +223,10 @@ def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
     job_id = sbatch(script)
     # Doesn't matter if slurm job is already dead before we call this
     # cleanup, but need to make sure it never survives
-    atexit.register(partial(cancel_slurm_job, job_id))
+    atexit.register(cancel_slurm_job, job_id)
     wtr = WaitTillRunning(job_id)
+    atexit.unregister(print_debug_information)
+    atexit.register(print_debug_information, job_id)
     success = wtr.wait()
     if not success:
         msg = "Job failed to start, check SLURM log for details."
@@ -228,9 +236,7 @@ def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
     node = get_slurm_node(job_id)
     logger.info("Forwarding port 8000 on %s to localhost:%s", port, node)
     forward_process = forward_port(node, port, 8000)
-    atexit.register(
-        lambda: terminate_process(forward_process)  # pylint: disable=unnecessary-lambda
-    )
+    atexit.register(terminate_process, forward_process)
     persist_path = Path.home() / ".llm_inference_platform.json"
     PersistInfo(job_id, port, node).dump(persist_path)
     atexit.register(lambda: persist_path.unlink())  # pylint: disable=unnecessary-lambda
