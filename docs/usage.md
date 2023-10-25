@@ -7,7 +7,14 @@ model running on Della and queryable from a local computer.
 
 ## 1. Connect to Della
 
-_If you're in the alpha, we trust you know how to do this_.
+If you know how to do this, then you can skip this step.
+
+Otherwise, open a browser and go to [MyDella Cluster Shell Accesss](https://mydella.princeton.edu/pun/sys/shell/ssh/della8).
+
+Note that if you are not on campus or your computer is not supported by the OIT security systems, you will need to first connect to the VPN.
+
+See the [Knowledge Base article](https://princeton.service-now.com/service?id=kb_article&table=kb_knowledge&sys_id=ce2a27064f9ca20018ddd48e5210c745) for information on how to connect.
+
 
 ## 2. Go to shared project directory
 
@@ -35,26 +42,23 @@ python src/llm_inference_platform/cli.py \
     --dir /scratch/gpfs/mj2976/shared/models
 ```
 
-## 5. Get hostname of compute node
+## 5. Optional: Forward Connection
 
 If all goes well, you will see the following message:
 
 ```
-DEBUG: Got status string RUNNING
+Model deployed successfully. Here are your options to connect to the model:
+1. If you are working on the della-gpu (head) node, no steps are necessary. Simply connect to localhost:<PORT>
+2. If you are working somewhere else run the following command: 
+    ssh -N -f -L localhost:8000:<NODE>:<PORT> <USERID>@della.princeton.edu
+Afterwards, connect as in option 1.
 ```
 
-This means the server is now running.
+If you are doing your work on the compute node, then you can simply 
 
-You can get the hostname of the node it is running on using the `squeue`
-command.
 
-Here's the one-liner:
+Record the values of `<PORT>` and `<NODE>`. 
 
-```bash
-squeue -u $USER -n llm-inference-platform -h -o '%N'
-```
-
-Record the output, e.g. `della-l07g4`
 
 ## 6. Create ssh tunnel from local computer
 
