@@ -107,7 +107,7 @@ def construct_singularity_cmd(
         f"--max-total-tokens={context_length}",
         f"--model-id=/data/{model_id}",
         # f"--revision={revision}",
-        # "--env",
+        "--env",
         "--port=8000",
         *extra_args,
     ]
