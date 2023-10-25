@@ -23,7 +23,7 @@ from llm_inference_platform.slurm import (
     sbatch,
 )
 from llm_inference_platform.ssh import find_open_port, forward_port
-from llm_inference_platform.utils.log import logger
+from llm_inference_platform.utils.log import DEFAULT_LOGGER_PATH, logger
 
 
 def list_available_models(
@@ -196,12 +196,21 @@ def terminate_process(process: subprocess.Popen[Any]) -> None:
     process.terminate()
 
 
+def print_debug_information() -> None:
+    print(  # noqa: T201
+        "If this script failed or did not work as expected, please include the "
+        "debug output in your report. It is saved in the file: "
+        f"{DEFAULT_LOGGER_PATH}"
+    )
+
+
 def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
     """Deploy a model to the cluster.
 
     Args:
         See `construct_singularity_cmd` for arguments.
     """
+    atexit.register(print_debug_information)
     cmd = construct_singularity_cmd(**kwargs)
     logger.debug("Singularity command: %s", shlex.join(cmd))
     script = format_slurm_submission_script(cmd)
