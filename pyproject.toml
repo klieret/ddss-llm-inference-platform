@@ -43,10 +43,12 @@ llm-inference-platform = "llm_inference_platform.cli:main"
 test = [
   "pytest >=6",
   "pytest-cov >=3",
+  "pytest-subprocess",
 ]
 dev = [
   "pytest >=6",
   "pytest-cov >=3",
+  "pytest-subprocess",
 ]
 docs = [
   "sphinx>=7.0",
@@ -149,6 +151,7 @@ select = [
 extend-ignore = [
   "PLR",    # Design related pylint codes
   "E501",   # Line too long
+  "T201",   # no print
 ]
 src = ["src"]
 unfixable = [
