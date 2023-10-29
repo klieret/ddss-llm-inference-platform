@@ -23,7 +23,12 @@ from llm_inference_platform.slurm import (
 )
 from llm_inference_platform.ssh import find_open_port, forward_port
 from llm_inference_platform.utils.log import DEFAULT_LOGGER_PATH, logger
+from llm_inference_platform.hf_model_downloader import get_weight_dir
 
+
+# MH: Path used during development; will substitute once shared
+# resources allocated
+SHARED_RESOURCE_DIR = Path("/scratch/gpfs/mj2976/shared")
 
 def list_available_models(
     model_directory: str | os.PathLike[Any] = Path("./models"),
@@ -64,9 +69,10 @@ def construct_singularity_cmd(
     *,
     model_name: str,
     revision: str | None,
-    model_dir: Path = Path("./models"),
+    model_dir: Path = Path("./models"), # Keep this default?
     quantization: str | None = None,
     context_length: int = 2048,
+    singularity_image: os.PathLike[Any] = None, # No default?
     extra_args: list[str] | None = None,
 ) -> list[str]:
     """Run ``text-generation-inference`` in singularity container
@@ -89,9 +95,9 @@ def construct_singularity_cmd(
     """
     if extra_args is None:
         extra_args = []
-    if revision is None:
-        raise NotImplementedError
-    model_id = f"{model_name}/snapshots/{revision}"
+    weight_dir = get_weight_dir(model_ref=model_name,
+                                hf_cache_dir=model_dir,
+                                revision=revision)
     cmd = [
         "singularity",
         "run",
@@ -102,10 +108,10 @@ def construct_singularity_cmd(
         "HF_HOME=/data",
         "--env",
         "HF_HUB_OFFLINE=1",
-        "text-generation-inference_latest.sif",
+        f"{singularity_image.absolute()}",
         # f"--huggingface-hub-cache={model_dir.absolute()}",
         f"--max-total-tokens={context_length}",
-        f"--model-id=/data/{model_id}",
+        f"--model-id=/data/{weight_dir}",
         # f"--revision={revision}",
         "--env",
         "--port=8000",
@@ -146,9 +152,9 @@ def add_cli_options(parser: argparse.ArgumentParser) -> None:
         required=True,
     )
     parser.add_argument(
-        "--dir",
+        "--model-dir",
         help="Directory containing models",
-        default=Path("./models"),
+        default=SHARED_RESOURCE_DIR/"models",
         type=Path,
     )
     parser.add_argument(
@@ -162,6 +168,14 @@ def add_cli_options(parser: argparse.ArgumentParser) -> None:
         type=int,
         help="Context length to use",
         default=2048,
+    )
+    parser.add_argument(
+        "--singularity-image",
+        type=Path, # test: will this fail if I pass str?
+        help=("Path to singularity container. Defaults to "
+              "shared image, if changing you must provide "
+              "a precompiled singularity image."),
+        default=SHARED_RESOURCE_DIR/"singularity/text-generation-inference_latest.sif"
     )
     parser.add_argument(
         "--extra-args",
@@ -201,13 +215,14 @@ def print_usage_instructions(port: str) -> None:
     """Tell user what SSH command to run on their own machine"""
     print("Model deployed successfully. Here are your options to connect to the model:")
     print(
-        f"1. If you are working on the della-gpu (head) node, no steps are necessary. "
+        f"1. If you are working on the della (head) node, no steps are necessary. "
         f"Simply connect to localhost:{port}."
     )
     user_id = os.environ.get("USER")
+    compute_node = get_slurm_node()
     print(
         "2. If you are working somewhere else run the following command: "
-        f"ssh -N -f -L 8000:della-gpu:{port} {user_id}@della-gpu.princeton.edu\n"
+        f"ssh -N -f -L localhost:8000:{compute_node}:{port} {user_id}@della.princeton.edu\n"
         "   Afterwards, connect as in option 1."
     )
     print("Press Ctrl + C once (!) to quit.")
@@ -281,8 +296,9 @@ def deploy_cli(args: argparse.Namespace) -> None:
     deploy(
         model_name=args.name,
         revision=args.revision,
-        model_dir=args.dir,
+        model_dir=args.model_dir,
         quantization=args.quantization,
         context_length=args.context_length,
+        singularity_image=args.singularity_image,
         extra_args=args.extra_args,
     )
