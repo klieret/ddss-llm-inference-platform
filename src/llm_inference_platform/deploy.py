@@ -68,7 +68,8 @@ def construct_docker_cmd(
 def construct_singularity_cmd(
     *,
     model_name: str,
-    revision: str | None,
+    revision: str | None = None,
+    snapshot: str | None = None,
     model_dir: Path = Path("./models"), # Keep this default?
     quantization: str | None = None,
     context_length: int = 2048,
@@ -80,8 +81,8 @@ def construct_singularity_cmd(
     Args:
         model_name (str): Name of model
         revision (str | None): Version/revision of model
+        snapshot (str | None): Hash of model version. Overrides revision.
         model_dir (Path, optional): Directory with models saved for offline use.
-            Defaults to Path("./models").
         quantization (str | None, optional): Quantization of model. Defaults to None.
         context_length (int, optional): Context length of model. Defaults to 2048.
         extra_args (list[str] | None, optional): Extra arguments passed to
@@ -96,8 +97,9 @@ def construct_singularity_cmd(
     if extra_args is None:
         extra_args = []
     weight_dir = get_weight_dir(model_ref=model_name,
-                                hf_cache_dir=model_dir,
-                                revision=revision)
+                                model_dir=model_dir,
+                                revision=revision,
+                                snapshot=snapshot)
     cmd = [
         "singularity",
         "run",
@@ -142,14 +144,21 @@ def add_cli_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--name",
         type=str,
-        help="Name of the model to run",
+        help="Name of the model to run. Pass as HF org_name/model_name.",
         required=True,
     )
     parser.add_argument(
         "--revision",
         type=str,
-        help="Revision of the model",
-        required=True,
+        default="main",
+        help="Revision of the model. Defaults to 'main'.",
+        required=False,
+    )
+    parser.add_argument(
+        "--snapshot",
+        type=str,
+        help="Snapshot of model",
+        required=False,
     )
     parser.add_argument(
         "--model-dir",
