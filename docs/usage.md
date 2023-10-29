@@ -1,11 +1,14 @@
 # Usage
 
-_WIP_: alpha version
+_The following instructions explain how to use the inference deployment tool without installing anything on your own._
+_It is still in early alpha meaning breaking changes to usage and interface are guaranteed._
 
 The following steps should get you up and running with a `Llama-2-7b-chat-hf`
 model running on Della and queryable from a local computer.
 
-## 1. Connect to Della
+## No-Install Method
+
+### 1. Connect to Della
 
 If you know how to do this, then you can skip this step.
 
@@ -16,60 +19,54 @@ Note that if you are not on campus or your computer is not supported by the OIT 
 See the [Knowledge Base article](https://princeton.service-now.com/service?id=kb_article&table=kb_knowledge&sys_id=ce2a27064f9ca20018ddd48e5210c745) for information on how to connect.
 
 
-## 2. Go to shared project directory
+### 2. Activate environment
 
-_There will be a better solution for here once we get the resources_.
-
-```bash
-cd /scratch/gpfs/mj2976/shared/llm-inference-platform
-```
-
-## 3. Activate environment
+From the terminal connected to Dela, run the following command:
 
 ```bash
-source .env/bin/activate
+source /scratch/gpfs/mj2976/shared/llm-inference-platform/.env/bin/activate
 ```
 
-## 4. Run CLI tool
+This command sets your Python environment to the one that has our tools pre-loaded.
+You can check that whether the command has worked with `which python`, which should output the path above with `python` instead of `activate`.
 
-This python script populates and launches a SLURM job.
+
+### 3. Run deploy command
+
+The following command launches a SLURM job that runs a Singularity container serving inference for the requested model.
+The example below has pre-populated values for our initial test.
 
 ```bash
-python src/llm_inference_platform/cli.py \
-    deploy \
-    --name models--meta-llama--Llama-2-7b-chat-hf \
-    --revision 08751db2aca9bf2f7f80d2e516117a53d7450235 \
-    --dir /scratch/gpfs/mj2976/shared/models
+llm-inference-platform deploy \
+    --name meta-llama/Llama-7b-chat-hf \
 ```
 
-## 5. Optional: Forward Connection
+
+### 4. Optional: Forward Connection
 
 If all goes well, you will see the following message:
 
 ```
 Model deployed successfully. Here are your options to connect to the model:
-1. If you are working on the della-gpu (head) node, no steps are necessary. Simply connect to localhost:<PORT>
-2. If you are working somewhere else run the following command: 
-    ssh -N -f -L localhost:8000:<NODE>:<PORT> <USERID>@della.princeton.edu
-Afterwards, connect as in option 1.
+1. If you are working on the della (head) node, no steps are necessary. Simply connect to localhost:<NODE>.
+2. If you are working somewhere else run the following command:
+ssh -N -f -L localhost:8000:<NODE>:8000 <USERID>@della.princeton.edu
+   Afterwards, connect as in option 1.
 ```
 
-If you are doing your work on the compute node, then you can simply 
 
 
-Record the values of `<PORT>` and `<NODE>`. 
+If you are doing your work on the compute node, then you can proceed to the next step.
 
+If you want to use the model from your own computer, open a terminal on your own device.
 
-## 6. Create ssh tunnel from local computer
+Run the following command to start an ssh tunnel to the compute node, substituting:
 
-On your _own_ device (i.e., your laptop), run the following command to start an
-ssh tunnel to the compute node, substituting:
-
-- `<NODE>` with the output of the command used in Step 5
+- `<NODE>` the compute node name in the message above
 - `<USERID>` with your Princeton ID, e.g. `mj2976`.
 
 ```bash
-ssh -N -f -L 8000:della-<NODE>:8000 <USERID>@della.princeton.edu
+ssh -N -f -L 8000:<NODE>:8000 <USERID>@della.princeton.edu
 ```
 
 Note: _You may need to do some authentication steps here, depending on how you
@@ -77,8 +74,19 @@ connect to the HPC._
 
 ## 7. Use endpoint!
 
-The endpoint is now accessible on your local computer! You can test it with the
-following command:
+You can now use the endpoint via a Web API!
+You can test it with the following command:
+
+If you are on a compute node:
+
+```bash
+curl localhost:<NODE>/generate \
+    -X POST \
+    -d '{"inputs":"Hello World!","parameters":{"max_new_tokens":100, "repetition_penalty":2.5}}' \
+    -H 'Content-Type: application/json'
+```
+
+If you are on your own computer and ran Step 4:
 
 ```bash
 curl localhost:8000/generate \
@@ -86,6 +94,7 @@ curl localhost:8000/generate \
     -d '{"inputs":"Hello World!","parameters":{"max_new_tokens":100, "repetition_penalty":2.5}}' \
     -H 'Content-Type: application/json'
 ```
+
 
 ## 8. Disconnecting/Cleaning Up
 
@@ -95,7 +104,7 @@ started the python command in Step 4.
 You can close the local ssh tunnel by running:
 
 ```bash
-ssh -O cancel -L 8000:della-<NODE>:8000 <USERID>@della.princeton.edu
+ssh -O cancel -L 8000:<NODE>:8000 <USERID>@della.princeton.edu
 ```
 
 ## 9. Connect applications
