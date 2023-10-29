@@ -13,6 +13,7 @@ from typing import Any, NamedTuple
 
 import jinja2
 
+from llm_inference_platform.hf_model_downloader import get_weight_dir
 from llm_inference_platform.slurm import (
     JobState,
     WaitTillRunning,
@@ -23,12 +24,11 @@ from llm_inference_platform.slurm import (
 )
 from llm_inference_platform.ssh import find_open_port, forward_port
 from llm_inference_platform.utils.log import DEFAULT_LOGGER_PATH, logger
-from llm_inference_platform.hf_model_downloader import get_weight_dir
-
 
 # MH: Path used during development; will substitute once shared
 # resources allocated
 SHARED_RESOURCE_DIR = Path("/scratch/gpfs/mj2976/shared")
+
 
 def list_available_models(
     model_directory: str | os.PathLike[Any] = Path("./models"),
@@ -70,10 +70,10 @@ def construct_singularity_cmd(
     model_name: str,
     revision: str | None = None,
     snapshot: str | None = None,
-    model_dir: Path = Path("./models"), # Keep this default?
+    model_dir: Path = Path("./models"),
     quantization: str | None = None,
     context_length: int = 2048,
-    singularity_image: os.PathLike[Any] = None, # No default?
+    singularity_image: Path = Path("./text-generation-inference_latest.sif"),
     extra_args: list[str] | None = None,
 ) -> list[str]:
     """Run ``text-generation-inference`` in singularity container
@@ -96,10 +96,9 @@ def construct_singularity_cmd(
     """
     if extra_args is None:
         extra_args = []
-    weight_dir = get_weight_dir(model_ref=model_name,
-                                model_dir=model_dir,
-                                revision=revision,
-                                snapshot=snapshot)
+    weight_dir = get_weight_dir(
+        model_ref=model_name, model_dir=model_dir, revision=revision, snapshot=snapshot
+    )
     cmd = [
         "singularity",
         "run",
@@ -163,7 +162,7 @@ def add_cli_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--model-dir",
         help="Directory containing models",
-        default=SHARED_RESOURCE_DIR/"models",
+        default=Path(SHARED_RESOURCE_DIR / "models"),
         type=Path,
     )
     parser.add_argument(
@@ -180,11 +179,14 @@ def add_cli_options(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--singularity-image",
-        type=Path, # test: will this fail if I pass str?
-        help=("Path to singularity container. Defaults to "
-              "shared image, if changing you must provide "
-              "a precompiled singularity image."),
-        default=SHARED_RESOURCE_DIR/"singularity/text-generation-inference_latest.sif"
+        type=Path,  # test: will this fail if I pass str?
+        help=(
+            "Path to singularity container. Defaults to "
+            "shared image, if changing you must provide "
+            "a precompiled singularity image."
+        ),
+        default=SHARED_RESOURCE_DIR
+        / "singularity/text-generation-inference_latest.sif",
     )
     parser.add_argument(
         "--extra-args",
@@ -220,7 +222,7 @@ def terminate_process(process: subprocess.Popen[Any]) -> None:
     process.terminate()
 
 
-def print_usage_instructions(port: str) -> None:
+def print_usage_instructions(port: str, node: str) -> None:
     """Tell user what SSH command to run on their own machine"""
     print("Model deployed successfully. Here are your options to connect to the model:")
     print(
@@ -228,10 +230,9 @@ def print_usage_instructions(port: str) -> None:
         f"Simply connect to localhost:{port}."
     )
     user_id = os.environ.get("USER")
-    compute_node = get_slurm_node()
     print(
-        "2. If you are working somewhere else run the following command: "
-        f"ssh -N -f -L localhost:8000:{compute_node}:{port} {user_id}@della.princeton.edu\n"
+        "2. If you are working somewhere else run the following command:\n"
+        f"ssh -N -f -L localhost:8000:{node}:8000 {user_id}@della.princeton.edu\n"
         "   Afterwards, connect as in option 1."
     )
     print("Press Ctrl + C once (!) to quit.")
@@ -280,7 +281,7 @@ def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
     persist_path = Path.home() / ".llm_inference_platform.json"
     PersistInfo(job_id, port, node).dump(persist_path)
     atexit.register(lambda: persist_path.unlink())  # pylint: disable=unnecessary-lambda
-    print_usage_instructions(port)
+    print_usage_instructions(port, node)
     try:
         while True:
             if forward_process.poll() is not None:
