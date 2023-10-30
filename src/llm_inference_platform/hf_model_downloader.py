@@ -15,7 +15,6 @@
 
 import argparse
 import os
-import logging
 from pathlib import Path
 from typing import Any
 
@@ -36,7 +35,7 @@ def download_save_huggingface_model(
 def get_weight_dir(
     model_ref: str,
     model_dir: str | os.PathLike[Any] = HF_DEFAULT_HOME,
-    revision: str = "main",
+    revision: str | None = "main",
     snapshot: str | None = None,
 ) -> str:
     """
@@ -46,7 +45,7 @@ def get_weight_dir(
         revision (str): Model revision branch. Defaults to 'main'.
         snapshot (str): snapshot hash of model. Defaults to None. If provided, overrides revision.
         model_dir (str | os.PathLike[Any]): Path to directory where models are stored. Defaults to value of $HF_HOME (or present directory)
-    
+
     Returns:
         str: path to model weights within model directory
     """
