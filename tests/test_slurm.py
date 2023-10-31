@@ -1,6 +1,6 @@
 import pytest
 
-from llm_inference_platform.slurm import (
+from llm_inference_platform._slurm import (
     JobState,
     WaitTillRunning,
     cancel_slurm_job,

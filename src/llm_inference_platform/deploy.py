@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import argparse
 import atexit
 import json
 import os
@@ -13,8 +12,7 @@ from typing import Any, NamedTuple
 
 import jinja2
 
-from llm_inference_platform.hf_model_downloader import HF_DEFAULT_HOME
-from llm_inference_platform.slurm import (
+from llm_inference_platform._slurm import (
     JobState,
     WaitTillRunning,
     cancel_slurm_job,
@@ -22,7 +20,8 @@ from llm_inference_platform.slurm import (
     get_slurm_node,
     sbatch,
 )
-from llm_inference_platform.ssh import find_open_port, forward_port
+from llm_inference_platform._ssh import find_open_port, forward_port
+from llm_inference_platform.hf_model_downloader import HF_DEFAULT_HOME
 from llm_inference_platform.utils.log import DEFAULT_LOGGER_PATH, logger
 
 # MH: Path used during development; will substitute once shared
@@ -38,7 +37,7 @@ def list_available_models(
     return [m for m in model_list if m.is_dir()]
 
 
-def construct_docker_cmd(
+def _construct_docker_cmd(
     model_name: str,
     model_dir: Path = Path("./models"),
     quantization: str = "None",
@@ -65,7 +64,7 @@ def construct_docker_cmd(
     ]
 
 
-def construct_singularity_cmd(
+def _construct_singularity_cmd(
     *,
     weight_dir: Path,
     quantization: str | None = None,
@@ -115,7 +114,7 @@ def construct_singularity_cmd(
     return cmd
 
 
-def format_slurm_submission_script(cmd: list[str], email: str = "") -> str:
+def _format_slurm_submission_script(cmd: list[str], email: str = "") -> str:
     """Format a SLURM submission script
 
     Args:
@@ -130,70 +129,7 @@ def format_slurm_submission_script(cmd: list[str], email: str = "") -> str:
     return template.render(cmd=shlex.join(cmd), email=email)  # type: ignore[no-any-return]
 
 
-def add_cli_options(parser: argparse.ArgumentParser) -> None:
-    """Add command line arguments to existing parser"""
-    parser.add_argument(
-        "--name",
-        type=str,
-        help=(
-            "Name of the model to run. Pass as HuggingFace org_name/model_name, e.g.,"
-            "'meta-llama/Llama-2-7b-chat-hf'."
-        ),
-        default="",
-    )
-    parser.add_argument(
-        "--revision",
-        type=str,
-        default="main",
-        help="Revision of the model. Defaults to 'main'.",
-    )
-    parser.add_argument(
-        "--weight-dir",
-        type=str,
-        help=(
-            "Path to the weight directory of the model, e.g., "
-            "/models/models--meta-llama--Llama-2-7b-chat-hf/snapshots/08751db2aca9bf2f7f80d2e516117a53d7450235"
-        ),
-        default="",
-    )
-    parser.add_argument(
-        "--model-dir",
-        help="Directory containing models",
-        default=Path(SHARED_RESOURCE_DIR / "models"),
-        type=Path,
-    )
-    parser.add_argument(
-        "--quantization",
-        type=str,
-        help="Quantization method to use",
-        default=None,
-    )
-    parser.add_argument(
-        "--context-length",
-        type=int,
-        help="Context length to use",
-        default=2048,
-    )
-    parser.add_argument(
-        "--singularity-image",
-        type=Path,
-        help=(
-            "Path to singularity container. Defaults to "
-            "shared image, if changing you must provide "
-            "a precompiled singularity image."
-        ),
-        default=SHARED_RESOURCE_DIR
-        / "singularity/text-generation-inference_latest.sif",
-    )
-    parser.add_argument(
-        "--extra-args",
-        nargs="+",
-        help="Extra arguments to pass to text-generation-inference",
-        default=None,
-    )
-
-
-class PersistInfo(NamedTuple):
+class _PersistInfo(NamedTuple):
     """Information to write to a file in user's home directory"""
 
     job_id: str
@@ -206,20 +142,20 @@ class PersistInfo(NamedTuple):
             json.dump(self._asdict(), f)  # pylint: disable=no-member
 
     @classmethod
-    def from_file(cls, path: Path) -> PersistInfo:
+    def from_file(cls, path: Path) -> _PersistInfo:
         """Load information from a file"""
         with path.open("r") as f:
             dct = json.load(f)
         return cls(**dct)
 
 
-def terminate_process(process: subprocess.Popen[Any]) -> None:
+def _terminate_process(process: subprocess.Popen[Any]) -> None:
     """Terminate process and log it"""
     logger.debug("Terminating process with PID %s", process.pid)
     process.terminate()
 
 
-def print_usage_instructions(port: str, node: str) -> None:
+def _print_usage_instructions(port: str, node: str) -> None:
     """Tell user what SSH command to run on their own machine"""
     logger.info(
         "Model deployed successfully. Here are your options to connect to the model:"
@@ -240,7 +176,7 @@ def print_usage_instructions(port: str, node: str) -> None:
     logger.info("Press Ctrl + C once (!) to quit.")
 
 
-def print_debug_information(job_id: str | None = None) -> None:
+def _print_debug_information(job_id: str | None = None) -> None:
     """Print debug information at the end of the script"""
     logger.warning(
         "If this script failed or did not work as expected, please include the "
@@ -262,17 +198,17 @@ def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
     Args:
         See `construct_singularity_cmd` for arguments.
     """
-    atexit.register(print_debug_information)
-    cmd = construct_singularity_cmd(**kwargs)
+    atexit.register(_print_debug_information)
+    cmd = _construct_singularity_cmd(**kwargs)
     logger.debug("Singularity command: %s", shlex.join(cmd))
-    script = format_slurm_submission_script(cmd)
+    script = _format_slurm_submission_script(cmd)
     job_id = sbatch(script)
     # Doesn't matter if slurm job is already dead before we call this
     # cleanup, but need to make sure it never survives
     atexit.register(cancel_slurm_job, job_id)
     wtr = WaitTillRunning(job_id)
-    atexit.unregister(print_debug_information)
-    atexit.register(print_debug_information, job_id)
+    atexit.unregister(_print_debug_information)
+    atexit.register(_print_debug_information, job_id)
     success = wtr.wait()
     if not success:
         msg = "Job failed to start, check SLURM log for details."
@@ -282,11 +218,11 @@ def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
     node = get_slurm_node(job_id)
     logger.info("Forwarding port 8000 on %s to localhost:%s", node, port)
     forward_process = forward_port(node, port, 8000)
-    atexit.register(terminate_process, forward_process)
+    atexit.register(_terminate_process, forward_process)
     persist_path = Path.home() / ".llm_inference_platform.json"
-    PersistInfo(job_id, port, node).dump(persist_path)
+    _PersistInfo(job_id, port, node).dump(persist_path)
     atexit.register(lambda: persist_path.unlink())  # pylint: disable=unnecessary-lambda
-    print_usage_instructions(port, node)
+    _print_usage_instructions(port, node)
     try:
         while True:
             if forward_process.poll() is not None:
@@ -330,25 +266,3 @@ def get_weight_dir(
     weight_dir = model_path / "snapshots" / snapshot_hash
     assert weight_dir.is_dir()
     return weight_dir
-
-
-def deploy_cli(args: argparse.Namespace) -> None:
-    """Run deployment from CLI"""
-    weight_dir = args.weight_dir
-    if not weight_dir:
-        if not args.name:
-            msg = "Must provide either --name or --weight-dir"
-            raise ValueError(msg)
-        weight_dir = get_weight_dir(
-            model_ref=args.name,
-            revision=args.revision,
-            model_dir=args.model_dir,
-        )
-        logger.debug("Using weight directory: %s", weight_dir)
-    deploy(
-        weight_dir=weight_dir,
-        quantization=args.quantization,
-        context_length=args.context_length,
-        singularity_image=args.singularity_image,
-        extra_args=args.extra_args,
-    )
