@@ -13,11 +13,11 @@ def test_cli_model_dl() -> None:
     args = parser.parse_args(
         [
             "model-dl",
-            "--repo_id",
+            "--repo-id",
             "test_model",
             "--revision",
             "test",
-            "--cache_dir",
+            "--cache-dir",
             "test",
         ]
     )
