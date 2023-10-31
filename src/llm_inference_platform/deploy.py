@@ -13,7 +13,7 @@ from typing import Any, NamedTuple
 
 import jinja2
 
-from llm_inference_platform.hf_model_downloader import get_weight_dir
+from llm_inference_platform.hf_model_downloader import HF_DEFAULT_HOME
 from llm_inference_platform.slurm import (
     JobState,
     WaitTillRunning,
@@ -67,10 +67,7 @@ def construct_docker_cmd(
 
 def construct_singularity_cmd(
     *,
-    model_name: str,
-    revision: str | None = None,
-    snapshot: str | None = None,
-    model_dir: Path = Path("./models"),
+    weight_dir: Path,
     quantization: str | None = None,
     context_length: int = 2048,
     singularity_image: Path = Path("./text-generation-inference_latest.sif"),
@@ -79,10 +76,7 @@ def construct_singularity_cmd(
     """Run ``text-generation-inference`` in singularity container
 
     Args:
-        model_name (str): Name of model
-        revision (str | None): Version/revision of model
-        snapshot (str | None): Hash of model version. Overrides revision.
-        model_dir (Path, optional): Directory with models saved for offline use.
+        weight_dir: Path to model weights
         quantization (str | None, optional): Quantization of model. Defaults to None.
         context_length (int, optional): Context length of model. Defaults to 2048.
         extra_args (list[str] | None, optional): Extra arguments passed to
@@ -96,24 +90,22 @@ def construct_singularity_cmd(
     """
     if extra_args is None:
         extra_args = []
-    weight_dir = get_weight_dir(
-        model_ref=model_name, model_dir=model_dir, revision=revision, snapshot=snapshot
-    )
+    model_dir = weight_dir.resolve().parent.parent
+    model_dir_mount = Path("/") / "data"
+    weight_dir_mount = model_dir_mount / weight_dir.resolve().relative_to(model_dir)
     cmd = [
         "singularity",
         "run",
         "--nv",
         "--mount",
-        f"type=bind,src={model_dir.absolute()},dst=/data",
+        f"type=bind,src={model_dir},dst={model_dir_mount}",
         "--env",
         "HF_HOME=/data",
         "--env",
         "HF_HUB_OFFLINE=1",
-        f"{singularity_image.absolute()}",
-        # f"--huggingface-hub-cache={model_dir.absolute()}",
+        f"{singularity_image.resolve()}",
         f"--max-total-tokens={context_length}",
-        f"--model-id=/data/{weight_dir}",
-        # f"--revision={revision}",
+        f"--model-id={weight_dir_mount}",
         "--env",
         "--port=8000",
         *extra_args,
@@ -143,21 +135,26 @@ def add_cli_options(parser: argparse.ArgumentParser) -> None:
     parser.add_argument(
         "--name",
         type=str,
-        help="Name of the model to run. Pass as HF org_name/model_name.",
-        required=True,
+        help=(
+            "Name of the model to run. Pass as HuggingFace org_name/model_name, e.g.,"
+            "'meta-llama/Llama-2-7b-chat-hf'."
+        ),
+        default="",
     )
     parser.add_argument(
         "--revision",
         type=str,
         default="main",
         help="Revision of the model. Defaults to 'main'.",
-        required=False,
     )
     parser.add_argument(
-        "--snapshot",
+        "--weight-dir",
         type=str,
-        help="Snapshot of model",
-        required=False,
+        help=(
+            "Path to the weight directory of the model, e.g., "
+            "/models/models--meta-llama--Llama-2-7b-chat-hf/snapshots/08751db2aca9bf2f7f80d2e516117a53d7450235"
+        ),
+        default="",
     )
     parser.add_argument(
         "--model-dir",
@@ -179,7 +176,7 @@ def add_cli_options(parser: argparse.ArgumentParser) -> None:
     )
     parser.add_argument(
         "--singularity-image",
-        type=Path,  # test: will this fail if I pass str?
+        type=Path,
         help=(
             "Path to singularity container. Defaults to "
             "shared image, if changing you must provide "
@@ -224,31 +221,39 @@ def terminate_process(process: subprocess.Popen[Any]) -> None:
 
 def print_usage_instructions(port: str, node: str) -> None:
     """Tell user what SSH command to run on their own machine"""
-    print("Model deployed successfully. Here are your options to connect to the model:")
-    print(
-        f"1. If you are working on the della (head) node, no steps are necessary. "
-        f"Simply connect to localhost:{port}."
+    logger.info(
+        "Model deployed successfully. Here are your options to connect to the model:"
+    )
+    logger.info(
+        "1. If you are working on the server running this scripts, no steps are necessary.\n"
+        "   Simply connect to localhost:%s.",
+        port,
     )
     user_id = os.environ.get("USER")
-    print(
+    logger.info(
         "2. If you are working somewhere else run the following command:\n"
-        f"ssh -N -f -L localhost:8000:{node}:8000 {user_id}@della.princeton.edu\n"
-        "   Afterwards, connect as in option 1."
+        "  ssh -N -f -L localhost:8000:%s:8000 %s@della.princeton.edu\n"
+        "   Afterwards, connect to localhost:8000",
+        node,
+        user_id,
     )
-    print("Press Ctrl + C once (!) to quit.")
+    logger.info("Press Ctrl + C once (!) to quit.")
 
 
 def print_debug_information(job_id: str | None = None) -> None:
     """Print debug information at the end of the script"""
-    print(
+    logger.warning(
         "If this script failed or did not work as expected, please include the "
-        "debug output in your report. It is saved in the file: "
-        f"{DEFAULT_LOGGER_PATH}. "
+        "debug output in your report. It is saved in the file: %s.",
+        DEFAULT_LOGGER_PATH,
     )
     if job_id is not None:
         log_file = Path(f"llm-inference-platform-{job_id}.log")
         if log_file.is_file():
-            print(f"Please also include the SLURM log file for job: {log_file}")
+            logger.warning(
+                "Please also include the SLURM log file for job: %s",
+                log_file,
+            )
 
 
 def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
@@ -301,12 +306,47 @@ def deploy(**kwargs) -> None:  # type: ignore[no-untyped-def]
         pass
 
 
+def get_weight_dir(
+    model_ref: str,
+    *,
+    model_dir: str | os.PathLike[Any] = HF_DEFAULT_HOME,
+    revision: str = "main",
+) -> Path:
+    """
+    Parse model name to locally stored weights.
+    Args:
+        model_ref (str) : Model reference containing org_name/model_name such as 'meta-llama/Llama-2-7b-chat-hf'.
+        revision (str): Model revision branch. Defaults to 'main'.
+        model_dir (str | os.PathLike[Any]): Path to directory where models are stored. Defaults to value of $HF_HOME (or present directory)
+
+    Returns:
+        str: path to model weights within model directory
+    """
+    model_dir = Path(model_dir)
+    assert model_dir.is_dir()
+    model_path = model_dir / "--".join(["models", *model_ref.split("/")])
+    assert model_path.is_dir()
+    snapshot_hash = (model_path / "refs" / revision).read_text()
+    weight_dir = model_path / "snapshots" / snapshot_hash
+    assert weight_dir.is_dir()
+    return weight_dir
+
+
 def deploy_cli(args: argparse.Namespace) -> None:
     """Run deployment from CLI"""
+    weight_dir = args.weight_dir
+    if not weight_dir:
+        if not args.name:
+            msg = "Must provide either --name or --weight-dir"
+            raise ValueError(msg)
+        weight_dir = get_weight_dir(
+            model_ref=args.name,
+            revision=args.revision,
+            model_dir=args.model_dir,
+        )
+        logger.debug("Using weight directory: %s", weight_dir)
     deploy(
-        model_name=args.name,
-        revision=args.revision,
-        model_dir=args.model_dir,
+        weight_dir=weight_dir,
         quantization=args.quantization,
         context_length=args.context_length,
         singularity_image=args.singularity_image,
