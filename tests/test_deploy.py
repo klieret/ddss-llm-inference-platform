@@ -18,16 +18,14 @@ def test_format_slurm_submission_script():
     assert "{{" not in script
 
 
-def test_construct_singularity_cmd():
+def test_construct_singularity_cmd(tmp_path: Path):
     sc = shlex.join(
         construct_singularity_cmd(
-            model_name="test_model",
-            revision="1",
+            weight_dir=tmp_path,
         )
     )
     assert "--quantization" not in sc
     assert "--port=8000" in sc
-    assert "test_model/snapshots/1" in sc
 
 
 def test_persist_info(tmp_path: Path):
