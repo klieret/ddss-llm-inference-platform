@@ -8,7 +8,10 @@ import colorlog
 
 
 def get_logger(
-    name: str = "llmip", level: int = logging.INFO, log_path: Path | None = None
+    name: str = "llmip",
+    *,
+    stream_level: int = logging.INFO,
+    log_path: Path | None = None,
 ) -> logging.Logger:
     """Sets up global logger."""
     _log: logging.Logger = colorlog.getLogger(name)
@@ -19,7 +22,7 @@ def get_logger(
         # logger ==> we don't need to do anything
         return _log
 
-    _log.setLevel(level)
+    _log.setLevel(logging.DEBUG)
 
     if log_path is not None:
         # Add a file handler to write log messages to a file
@@ -53,7 +56,7 @@ def get_logger(
     )
     sh.setFormatter(formatter)
     # Controlled by overall logger level
-    sh.setLevel(logging.DEBUG)
+    sh.setLevel(stream_level)
 
     _log.addHandler(sh)
 
