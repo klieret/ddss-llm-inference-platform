@@ -1,4 +1,4 @@
-from llm_inference_platform.ssh import find_open_port, forward_port
+from llm_inference_platform._ssh import find_open_port, forward_port
 
 
 def test_find_open_port() -> None:

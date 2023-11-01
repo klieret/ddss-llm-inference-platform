@@ -13,7 +13,6 @@
 # Script begins
 
 
-import argparse
 import os
 
 from huggingface_hub import snapshot_download
@@ -28,20 +27,3 @@ def download_save_huggingface_model(
     if cache_dir == "":
         cache_dir = HF_DEFAULT_HOME
     snapshot_download(repo_id=repo_id, revision=revision, cache_dir=cache_dir)
-
-
-def add_cli_args(parser: argparse.ArgumentParser) -> None:
-    """Add command line arguments to existing parser"""
-    parser.add_argument("--repo-id", type=str, help="HF Model Hub Repo ID")
-    parser.add_argument("--revision", type=str, default="main")
-    parser.add_argument(
-        "--cache-dir",
-        type=str,
-        default=HF_DEFAULT_HOME,
-        help="Location to save model, defaults to None",
-    )
-
-
-def download_cli(args: argparse.Namespace) -> None:
-    """Run script from command line"""
-    download_save_huggingface_model(args.repo_id, args.revision, args.cache_dir)
