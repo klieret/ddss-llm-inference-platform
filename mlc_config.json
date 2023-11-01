@@ -2,6 +2,9 @@
   "ignorePatterns": [
     {
       "pattern": "https://github.com/issues?.*"
+    },
+    {
+      "pattern": ".*mydella.princeton.edu.*"
     }
   ]
 }
