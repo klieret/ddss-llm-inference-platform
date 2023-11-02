@@ -3,7 +3,7 @@
 A breakdown of the functionality we aim to provide in stages:
 
 1. Command-line Deployment (no special infrastructure needed)
-2. GUI Deployment (integration with RC infrastructure needed)
+2. Deployment of the LLM via web-based graphical user interface (GUI)
 3. "Supported" GUI Interaction
 
 ## Status
