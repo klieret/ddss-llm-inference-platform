@@ -15,28 +15,4 @@ We believe that there are considerable benefits to creating this product:
 - **Facilitating** open, reproducible research with LMs.
 - Creating a means for **optimizing** shared resource usage.
 
-## Targets
-
-The current idea is to break down development into three stages.
-
-- [ ] CLI Deployment
-- [ ] API Interaction
-- [ ] GUI Deployment
-- [ ] GUI Interaction
-
-
-### Stage 1: Deployment Interface
-
-The first step is to establish a GUI for selecting and deploying LMs on Princeton's HPC. We currently propose to do this within the SLURM/queueing model of resource allocation, where users can request up to 1 hour of inference time.
-
-The deployment interface can be made with [Open OnDemand](https://openondemand.org/) or a simple web interface 
-
-
-
-
-
-
-
-
-
 
