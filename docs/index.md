@@ -1,4 +1,4 @@
-# llm_inference_platform
+# Princeton LLM Inference Platform
 
 ```{toctree}
 :maxdepth: 2
