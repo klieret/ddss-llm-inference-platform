@@ -1,4 +1,9 @@
-# llm-inference-platform
+# LLM inference platform
+
+[![CI](https://github.com/princeton-ddss/llm-inference-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/princeton-ddss/llm-inference-platform/actions/workflows/ci.yml)
+[![Check Markdown links](https://github.com/princeton-ddss/llm-inference-platform/actions/workflows/check-links.yaml/badge.svg)](https://github.com/princeton-ddss/llm-inference-platform/actions/workflows/check-links.yaml)
+[![Documentation Status](https://readthedocs.org/projects/princeton-llm-inference-platform/badge/?version=latest)](https://princeton-llm-inference-platform.readthedocs.io/en/latest/?badge=latest)
+[![CD](https://github.com/princeton-ddss/llm-inference-platform/actions/workflows/cd.yml/badge.svg)](https://github.com/princeton-ddss/llm-inference-platform/actions/workflows/cd.yml)
 
 <!-- SPHINX-START -->
 
