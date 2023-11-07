@@ -5,40 +5,71 @@ This project is still at an early stage of development.
 Breaking changes might occur.
 ```
 
-The following steps should get you up and running with a `Llama-2-7b-chat-hf`
-model running on Della and queryable from a local computer.
+## Local workflow
 
-## No-Install Method
+This workflow assumes that you have experience running commands in the command
+line. If you are not sure what a command line is, you may prefer the Jupyterhub
+workflow for now.
 
-The following instructions explain how to use the inference deployment tool
-without installing anything on your own.
+### Open terminal
 
-### Connect to Della
+Open a terminal on Della by either:
 
-If you know how to do this, then you can skip this step.
+1. Open a terminal in the browser using
+   [MyDella](https://mydella.princeton.edu/pun/sys/shell/ssh/della8)
+2. Open a terminal locally and ssh to Della (i.e. `ssh della.princeton.edu`).
 
-Otherwise, open a browser and go to
-[MyDella Cluster Shell Access](https://mydella.princeton.edu/pun/sys/shell/ssh/della8).
+NB: Research Computing provides the following
+[help article](https://researchcomputing.princeton.edu/support/knowledge-base/connect-ssh)
+for connecting to the clusters via SSH.
 
-Note that if you are not on campus or your computer is not supported by the OIT
-security systems, you will need to first connect to the VPN.
+### Install library locally
 
-See the
-[Knowledge Base article](https://princeton.service-now.com/service?id=kb_article&table=kb_knowledge&sys_id=ce2a27064f9ca20018ddd48e5210c745)
-for information on how to connect.
+_The following workflow uses conda environment. You are welcome to use
+virtualenv instead_.
 
-### Activate environment
-
-From the terminal connected to Dela, run the following command:
+1. Load the anaconda module
 
 ```bash
-source /scratch/gpfs/mj2976/shared/llm-inference-platform/.env/bin/activate
+module purge
+module load anaconda3/2023.3
 ```
 
-This command sets your Python environment to the one that has our tools
-pre-loaded. You can check that whether the command has worked with
-`which python`, which should output the path above with `python` instead of
-`activate`.
+2. Create a new conda environment:
+
+```bash
+conda create -n lip python
+```
+
+_I am naming it `lip` as short for `llm-inference-platform`. This is arbitrary._
+
+3. Activate the new conda environment:
+
+```bash
+conda activate lip
+```
+
+4. Install the `llm-inference-platform` package
+
+```bash
+pip install git+https://github.com/princeton-ddss/llm-inference-platform.git
+```
+
+### (Optional) Download a model
+
+During development you can use a model pre-downloaded from my (@muhark)
+directory. In the future we aim to have a shared directory.
+
+If you wish to use your own model, you can use the model download functionality.
+The following command downloads
+[bigscience/bloom-560m](https://huggingface.co/bigscience/bloom-560m).
+
+```bash
+llm-inference-platform model-dl \
+    --repo-id bigscience/bloom-560m \
+    --revision main \
+    --cache-dir=./models
+```
 
 ### Run deploy command
 
@@ -46,27 +77,34 @@ The following command launches a SLURM job that runs a Singularity container
 serving inference for the requested model. The example below has pre-populated
 values for our initial test.
 
+(If you downloaded a model in the previous step, you can change the parameters
+accordingly).
+
 ```bash
-llm-inference-platform deploy --name meta-llama/Llama-7b-chat-hf
+llm-inference-platform deploy --name bigscience/bloom-560m
+                              --revision main
+                              --cache-dir /scratch/gpfs/mj2976/shared/models
 ```
 
-### Optional: Forward Connection
-
-If all goes well, you will see the following message:
+If all goes well, you will get the following message in the output
 
 ```
-Model deployed successfully. Here are your options to connect to the model:
-1. If you are working on the della (head) node, no steps are necessary. Simply connect to localhost:<NODE>.
-2. If you are working somewhere else run the following command:
-ssh -N -f -L localhost:8000:<NODE>:8000 <USERID>@della.princeton.edu
-   Afterwards, connect as in option 1.
+[21:28:17 llmip] INFO: Model deployed successfully. Here are your options to connect to the model:
+[21:28:17 llmip] INFO: 1. If you are working on the server running this scripts, no steps are necessary.
+   Simply connect to localhost:38761.
+[21:28:17 llmip] INFO: 2. If you are working somewhere else run the following command:
+  ssh -N -f -L localhost:8000:della-l08g6:8000 mj2976@della.princeton.edu
+   Afterwards, connect to localhost:8000
 ```
 
-If you are doing your work on the same node where the script is running, then
-you can proceed to the next step.
+Copy the command under `INFO: 2.`:
 
-If you want to use the model from your own computer, open a terminal on your own
-device and run the `ssh -N -f ...` command that was shown to you.
+```bash
+  ssh -N -f -L localhost:8000:della-l08g6:8000 mj2976@della.princeton.edu
+```
+
+This command will forward the API serving the LLM from the compute node to your
+local machine.
 
 ```{note}
 You may need to do some authentication steps here, depending on how you
@@ -81,17 +119,14 @@ command:
 ```bash
 curl localhost:<PORT>/generate \
     -X POST \
-    -d '{"inputs":"Hello World!","parameters":{"max_new_tokens":100, "repetition_penalty":2.5}}' \
+    -d '{"inputs":"Hello World!","parameters":{"max_new_tokens":20}}' \
     -H 'Content-Type: application/json'
 ```
 
-where `<PORT>` is either 8000 (you manually forwarded the port in step 4), or
-the port that was shown to you in step 4, option 1.
-
-Next steps for us, but this should now work with most HuggingFace applications
-by pointing to `localhost:<PORT>`.
+where `<PORT>` is either 8000, or whatever port you assigned in place of the
+8000 in `localhost:8000` in the step above.
 
 ## Disconnecting/Cleaning Up
 
 You can close the application by pressing `<Ctrl-C>` in the terminal where you
-started the python command in Step 4.
+ran the deploy command. Please do not spam `<Ctrl-C>`.
