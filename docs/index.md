@@ -9,6 +9,8 @@
 ```{toctree}
 readme.md
 usage.md
+vision.md
+roadmap.md
 della/README.md
 local/README.md
 ```
